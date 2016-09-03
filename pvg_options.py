@@ -2,27 +2,28 @@
 # -*- coding: utf-8 -*-
 #
 #       pvg_options.py
-#       
+#
 #       Copyright 2011 Giorgio Gilestro <giorgio@gilest.ro>
-#       
+#
 #       This program is free software; you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
 #       the Free Software Foundation; either version 2 of the License, or
 #       (at your option) any later version.
-#       
+#
 #       This program is distributed in the hope that it will be useful,
 #       but WITHOUT ANY WARRANTY; without even the implied warranty of
 #       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #       GNU General Public License for more details.
-#       
+#
 #       You should have received a copy of the GNU General Public License
 #       along with this program; if not, write to the Free Software
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
-#       
-#       
+#
+#
 
 import wx, os
+from wx.lib.pubsub import pub
 from pvg_common import options
 import wx.lib.filebrowsebutton as filebrowse
 
@@ -51,11 +52,16 @@ class optionsFrame(wx.Frame):
     def __init__(self, parent, ID=-1, title='pySolo Video Options', pos=wx.DefaultPosition,
         size=(640,480), style=wx.DEFAULT_FRAME_STYLE
             ):
-        
+
         wx.Frame.__init__(self, parent, ID, title, pos, size, style)
-        
+
+
         pp = wx.Panel(self, -1)
         self.optpane = wx.Treebook(pp, -1, style= wx.BK_DEFAULT)
+
+        msg = "Options changed"
+        instructions = wx.StaticText(pp, label=msg)
+        self.msgTxt = wx.TextCtrl(pp, value="")
 
         # Now make a bunch of panels for the list book
         for section in options.getOptionsGroups():
@@ -106,7 +112,7 @@ class optionsFrame(wx.Frame):
         tp = wx.Panel(parent, -1,  style = wx.TAB_TRAVERSAL)
 
         self.virtualw = wx.ScrolledWindow(tp)
-        
+
         sz1 = wx.BoxSizer(wx.VERTICAL)
 
         titleFont = wx.Font(10, wx.SWISS, wx.NORMAL, wx.BOLD)
@@ -124,42 +130,44 @@ class optionsFrame(wx.Frame):
             if "FOLDER" in option_name.upper():
                 items.append ( filebrowse.DirBrowseButton(self.virtualw, -1, size=(400, -1), changeCallback = partial(self.__saveValue, option_name), startDirectory="."  ))
                 items.append ( (wx.StaticLine(self.virtualw), 0, wx.EXPAND|wx.TOP|wx.BOTTOM, 5 ))
-                
-            
+
+
             else: #for boolean first choice is always True, second choice always False
-                
+
                 items.append ( wx.TextCtrl (self.virtualw, -1, value=option_value))
                 items[-1].Bind (wx.EVT_TEXT, partial (self.__saveValue, option_name) )
                 items.append ( (wx.StaticLine(self.virtualw), 0, wx.EXPAND|wx.TOP|wx.BOTTOM, 5 ))
-        
-        
-        
+
+
+
         sz1.AddMany (items)
         self.virtualw.SetSizer(sz1)
         sz1.Fit(self.virtualw)
-        
+
         self.virtualw.SetScrollRate(20,20)
         TreeBookPanelSizer = wx.BoxSizer()
         TreeBookPanelSizer.Add(self.virtualw,  1, wx.GROW | wx.EXPAND, 0)
         tp.SetSizer(TreeBookPanelSizer)
         return tp
-        
+
     def __saveValue(self, key, event):
         """
         """
         value = event.GetString()
         options.SetOption( key, value )
-        
-        
+
+
     def onCancelOptions(self, event):
         """
         """
         self.Destroy()
-        
+
     def onSaveOptions(self, event):
         """
         """
         options.Save()
+        msg = self.msgTxt.GetValue()
+        pub.sendMessage("panelListener", message=msg)
         self.Close()
 
 
@@ -177,6 +185,3 @@ if __name__ == '__main__':
     # Run program
     app=MyApp()
     app.MainLoop()
-
-
-

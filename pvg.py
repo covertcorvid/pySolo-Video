@@ -2,29 +2,31 @@
 # -*- coding: utf-8 -*-
 #
 #       pvg.py pysolovideogui
-#       
+#
 #
 #       Copyright 2011 Giorgio Gilestro <giorgio@gilest.ro>
-#       
+#
 #       This program is free software; you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
 #       the Free Software Foundation; either version 2 of the License, or
 #       (at your option) any later version.
-#       
+#
 #       This program is distributed in the hope that it will be useful,
 #       but WITHOUT ANY WARRANTY; without even the implied warranty of
 #       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #       GNU General Public License for more details.
-#       
+#
 #       You should have received a copy of the GNU General Public License
 #       along with this program; if not, write to the Free Software
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
-#       
-#       
+#
+#
 
 
 import wx, os
+
+from wx.lib.pubsub import pub
 
 from pvg_options import optionsFrame
 
@@ -42,23 +44,23 @@ class mainNotebook(wx.Notebook):
         # begin wxGlade: propertiesNotebook.__init__
         kwds["style"] = wx.NB_LEFT
         wx.Notebook.__init__(self, *args, **kwds)
-        
+
         self.panelOne = panelOne(self)
         self.AddPage(self.panelOne, "Monitors sheet")
 
         self.panelTwo = panelLiveView(self)
         self.AddPage(self.panelTwo, "Live View")
-        
+
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGING, self.OnPageChanging)
-        
+
         self.Layout()
-        
+
     def OnPageChanging(self, event):
         """
         """
         #self.panelOne.StopPlaying()
         self.panelTwo.StopPlaying()
-        
+
 class mainFrame(wx.Frame):
     """
     The main frame of the application
@@ -67,7 +69,10 @@ class mainFrame(wx.Frame):
 
         kwds["style"] = wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwds)
-      
+
+        #Register listener to dynamically update configuration
+        pub.subscribe(self.configListener, "panelListener")
+
         self.__menubar__()
         self.__set_properties()
         self.__do_layout()
@@ -75,7 +80,7 @@ class mainFrame(wx.Frame):
     def __do_layout(self):
         #Add Notebook
         self.videoNotebook = mainNotebook(self, -1)
-        
+
         mainSizer = wx.BoxSizer(wx.HORIZONTAL)
         mainSizer.Add(self.videoNotebook, 1, wx.EXPAND, 0)
         self.SetSizer(mainSizer)
@@ -86,9 +91,9 @@ class mainFrame(wx.Frame):
         self.SetTitle("pySoloVideo")
         x,y = options.GetOption("Resolution")
         self.SetSize((x*1.8,y*1.4))
-        
+
     def __menubar__(self):
-        
+
         #Gives new IDs to the menu voices in the menubar
         ID_FILE_OPEN = wx.NewId()
         ID_FILE_SAVE = wx.NewId()
@@ -121,7 +126,7 @@ class mainFrame(wx.Frame):
         menubar. Append(helpmenu, '&Help')
 
         #and create the menubar
-        self.SetMenuBar(menubar)        
+        self.SetMenuBar(menubar)
 
         wx.EVT_MENU(self, ID_FILE_OPEN, self.onFileOpen)
         wx.EVT_MENU(self, ID_FILE_SAVE, self.onFileSave)
@@ -130,7 +135,7 @@ class mainFrame(wx.Frame):
         wx.EVT_MENU(self, ID_FILE_EXIT, self.onFileExit)
         wx.EVT_MENU(self, ID_OPTIONS_SET, self.onConfigure)
         wx.EVT_MENU(self, ID_HELP_ABOUT, self.onAbout)
-        
+
     def onAbout(self, event):
         """
         Shows the about dialog
@@ -138,25 +143,25 @@ class mainFrame(wx.Frame):
         about = 'pySolo-Video - v %s\n' % pySoloVideoVersion
         about += 'by Giorgio F. Gilestro\n'
         about += 'Visit http://www.pysolo.net for more information'
-        
+
         dlg = wx.MessageDialog(self, about, 'About', wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
 
-        
+
     def onFileSave(self, event):
         """
         """
         options.Save()
-        
+
     def onFileSaveAs(self, event):
         """
         """
         filename = DEFAULT_CONFIG
         wildcard = "pySolo Video config file (*.cfg)|*.cfg"
-        
+
         dlg = wx.FileDialog(
-            self, message="Save file as ...", defaultDir=os.getcwd(), 
+            self, message="Save file as ...", defaultDir=os.getcwd(),
             defaultFile=filename, wildcard=wildcard, style=wx.SAVE
             )
 
@@ -165,14 +170,14 @@ class mainFrame(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
             options.Save(filename=path)
-            
+
         dlg.Destroy()
-        
+
     def onFileOpen(self, event):
         """
         """
         wildcard = "pySolo Video config file (*.cfg)|*.cfg"
-        
+
         dlg = wx.FileDialog(
             self, message="Choose a file",
             defaultDir=os.getcwd(),
@@ -184,24 +189,30 @@ class mainFrame(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
             options.New(path)
-        
+
         dlg.Destroy()
 
     def onFileExit(self, event):
         """
         """
         self.Close()
-    
+
     def onConfigure(self, event):
         """
         """
         frame_opt = optionsFrame(self, -1, '')
         frame_opt.Show()
-    
-    
-    
+
+    def configListener(self, message, arg2=None):
+        """Listen for options window close"""
+        print "options closed"
+        # TODO: Update the screen
+        # videoNotebook.Layout() Refresh() and Show() don't work
+        # self.Refresh does not work
+        # self.__do_layout does not work
+
 if __name__ == "__main__":
-    
+
     app = wx.App(False)
     frame_1 = mainFrame(None, -1, "")
     app.SetTopWindow(frame_1)
