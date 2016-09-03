@@ -55,6 +55,13 @@ class mainNotebook(wx.Notebook):
 
         self.Layout()
 
+    def updateUI(self):
+        self.panelOne.onDestroy()
+        self.panelTwo.onDestroy()
+        self.panelOne = panelOne(self)
+        self.panelTwo = panelLiveView(self)
+        self.Layout()
+
     def OnPageChanging(self, event):
         """
         """
@@ -207,6 +214,7 @@ class mainFrame(wx.Frame):
         """Listen for options window close"""
         print "options closed"
         # TODO: Update the screen
+        self.videoNotebook.updateUI()
         # videoNotebook.Layout() Refresh() and Show() don't work
         # self.Refresh does not work
         # self.__do_layout does not work

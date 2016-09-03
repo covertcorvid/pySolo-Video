@@ -2,19 +2,19 @@
 # -*- coding: utf-8 -*-
 #
 #       pvg_panel_one.py
-#       
+#
 #       Copyright 2011 Giorgio Gilestro <giorgio@gilest.ro>
-#       
+#
 #       This program is free software; you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
 #       the Free Software Foundation; either version 2 of the License, or
 #       (at your option) any later version.
-#       
+#
 #       This program is distributed in the hope that it will be useful,
 #       but WITHOUT ANY WARRANTY; without even the implied warranty of
 #       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #       GNU General Public License for more details.
-#       
+#
 #       You should have received a copy of the GNU General Public License
 #       along with this program; if not, write to the Free Software
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
@@ -32,13 +32,13 @@ class thumbnailPanel(previewPanel):
     """
     A small preview Panel to be used as thumbnail
     """
-    
+
     def __init__( self, parent, monitor_number, thumbnailSize=(320,240) ):
         previewPanel.__init__(self, parent, size=thumbnailSize, keymode=False)
 
         self.number = int(monitor_number)
         self.allowEditing = False
-        
+
         self.displayNumber()
 
         self.Bind(wx.EVT_LEFT_UP, self.onLeftClick)
@@ -55,20 +55,20 @@ class thumbnailPanel(previewPanel):
         pos = int(self.size[0]/2 - 20), int(self.size[1]/2 - 20),
         font1 = wx.Font(35, wx.SWISS, wx.NORMAL, wx.NORMAL)
         text1 = wx.StaticText( self, wx.ID_ANY, '%s' % (self.number+1), pos)
-        text1.SetFont(font1)    
-        
+        text1.SetFont(font1)
+
     def onLeftClick(self, evt):
         """
         Send signal around that the thumbnail was clicked
         """
         event = ThumbnailClickedEvt(self.GetId())
-        
+
         event.id = self.GetId()
         event.number = self.number
         event.thumbnail = self
-       
+
         self.GetEventHandler().ProcessEvent(event)
-        
+
 
 
 class panelGridView(wx.ScrolledWindow):
@@ -82,7 +82,7 @@ class panelGridView(wx.ScrolledWindow):
         self.SetScrollRate(10, 10)
         self.parent = parent
         self.thumbnailSize = thumbnailSize
-        
+
         grid_mainSizer = wx.GridSizer(6,3,2,2)
 
         #Populate the thumbnail grid
@@ -90,19 +90,24 @@ class panelGridView(wx.ScrolledWindow):
         for i in range (int(gridSize)):
             self.previewPanels.append ( thumbnailPanel(self, monitor_number=i, thumbnailSize=self.thumbnailSize) )
             grid_mainSizer.Add(self.previewPanels[i])#, 0, wx.EXPAND|wx.FIXED_MINSIZE, 0)
-            
+
         self.SetSizer(grid_mainSizer)
-        
+
         self.Bind(EVT_THUMBNAIL_CLICKED, self.onThumbnailClicked)
-        
+
+    def onRefresh(self, gridSize, thumbnailSize=(320,240)):
+        self.previewPanels = []
+        for i in range(int(gridSize)):
+            self.previewPanels.append(thumbnailPanel(self, monitor_number=i, thumbnailSize=self.thumbnailSize))
+
     def onThumbnailClicked(self, event):
         """
         Relay event to sibling panel
         """
         wx.PostEvent(self.parent.lowerPanel, event)
         event.Skip()
-        
-        
+
+
 class panelConfigure(wx.Panel):
     """
     """
@@ -111,27 +116,27 @@ class panelConfigure(wx.Panel):
         """
         wx.Panel.__init__(self, parent, wx.ID_ANY, size=(-1,300), style=wx.SUNKEN_BORDER|wx.TAB_TRAVERSAL)
         self.parent = parent
-        
+
         self.thumbnail = None
         self.mask_file = None
         self.source = None
         self.sourceType = None
         self.track = None
         self.trackType = None
-        
+
         lowerSizer = wx.BoxSizer(wx.HORIZONTAL)
-        
+
         #Static box1 (LEFT)
         sb_1 = wx.StaticBox(self, -1, "Select Monitor")#, size=(250,-1))
         sbSizer_1 = wx.StaticBoxSizer (sb_1, wx.VERTICAL)
-        
+
         n_monitors = options.GetOption("Monitors")
         self.MonitorList = ['Monitor %s' % (int(m) + 1) for m in range( n_monitors )]
         self.thumbnailNumber = wx.ComboBox(self, -1, size=(-1,-1) , choices=self.MonitorList, style=wx.CB_DROPDOWN | wx.CB_READONLY | wx.CB_SORT)
         self.Bind ( wx.EVT_COMBOBOX, self.onChangingMonitor, self.thumbnailNumber)
 
         self.currentSource = wx.TextCtrl (self, -1, "No Source Selected", style=wx.TE_READONLY)
-        
+
         btnSizer_1 = wx.BoxSizer(wx.HORIZONTAL)
         self.btnPlay = wx.Button( self, wx.ID_FORWARD, label="Play")
         self.btnStop = wx.Button( self, wx.ID_STOP, label="Stop")
@@ -143,17 +148,17 @@ class panelConfigure(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.onApplySource, self.applyButton)
 
 
-        
+
         btnSizer_1.Add ( self.btnPlay , 0, wx.ALIGN_LEFT|wx.ALL, 5 )
         btnSizer_1.Add ( self.btnStop , 0, wx.ALIGN_CENTER|wx.LEFT|wx.TOP|wx.DOWN, 5 )
         btnSizer_1.Add ( self.applyButton, 0, wx.ALIGN_RIGHT|wx.LEFT|wx.RIGHT|wx.TOP, 5 )
-        
+
         sbSizer_1.Add ( self.thumbnailNumber, 0, wx.ALIGN_CENTRE|wx.LEFT|wx.RIGHT|wx.TOP, 5 )
         sbSizer_1.Add ( self.currentSource, 0, wx.EXPAND|wx.ALIGN_CENTRE|wx.LEFT|wx.RIGHT|wx.TOP, 5 )
         sbSizer_1.Add ( btnSizer_1, 0, wx.EXPAND|wx.ALIGN_BOTTOM|wx.TOP, 5 )
-       
+
         lowerSizer.Add (sbSizer_1, 0, wx.EXPAND|wx.ALL, 5)
-        
+
         #Static box2 (CENTER)
         sb_2 = wx.StaticBox(self, -1, "Select Video input" )
         sbSizer_2 = wx.StaticBoxSizer (sb_2, wx.VERTICAL)
@@ -164,14 +169,14 @@ class panelConfigure(wx.Panel):
         rb1 = wx.RadioButton(self, -1, 'Camera', style=wx.RB_GROUP)
         source1 = wx.ComboBox(self, -1, size=(285,-1) , choices = self.WebcamsList, style=wx.CB_DROPDOWN | wx.CB_READONLY | wx.CB_SORT)
         self.Bind(wx.EVT_COMBOBOX, self.sourceCallback, source1)
-        
+
         rb2 = wx.RadioButton(self, -1, 'File' )
         source2 = FileBrowseButton(self, -1, labelText='', size=(300,-1), changeCallback = self.sourceCallback)
-        
+
         rb3 = wx.RadioButton(self, -1, 'Folder' )
         source3 = DirBrowseButton (self, style=wx.DD_DIR_MUST_EXIST, labelText='', size=(300,-1), changeCallback = self.sourceCallback)
-     
-     
+
+
         self.controls = []
         self.controls.append((rb1, source1))
         self.controls.append((rb2, source2))
@@ -182,20 +187,20 @@ class panelConfigure(wx.Panel):
             grid2.Add( source , 0, wx.ALIGN_CENTRE|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 2 )
             self.Bind(wx.EVT_RADIOBUTTON, self.onChangeSource, radio )
             source.Enable(False)
-        
+
         self.controls[0][1].Enable(True)
-        
+
         #grid2.Add(wx.StaticText(self, -1, ""))
-        
-        sbSizer_2.Add( grid2 )        
+
+        sbSizer_2.Add( grid2 )
         lowerSizer.Add(sbSizer_2, 0, wx.EXPAND|wx.ALL, 5)
-       
+
         #Static box3 (RIGHT)
         sb_3 = wx.StaticBox(self, -1, "Set Tracking Parameters")
         sbSizer_3 = wx.StaticBoxSizer (sb_3, wx.VERTICAL)
-        
-        sbSizer_31 = wx.BoxSizer (wx.HORIZONTAL) 
-        
+
+        sbSizer_31 = wx.BoxSizer (wx.HORIZONTAL)
+
         self.activateTracking = wx.CheckBox(self, -1, "Activate Tracking")
         self.activateTracking.SetValue(False)
         self.activateTracking.Bind ( wx.EVT_CHECKBOX, self.onActivateTracking)
@@ -207,9 +212,9 @@ class panelConfigure(wx.Panel):
 
         sbSizer_31.Add (self.activateTracking, 0, wx.ALIGN_LEFT|wx.LEFT|wx.RIGHT|wx.TOP, 5 )
         sbSizer_31.Add (self.isSDMonitor, 0, wx.ALIGN_LEFT|wx.LEFT|wx.RIGHT|wx.TOP, 5 )
-        
+
         self.pickMaskBrowser = FileBrowseButton(self, -1, labelText='Mask File')
-                
+
         #sbSizer_3.Add ( self.activateTracking , 0, wx.ALIGN_LEFT|wx.LEFT|wx.RIGHT|wx.TOP, 5 )
         sbSizer_3.Add ( sbSizer_31 , 0, wx.ALIGN_LEFT|wx.LEFT|wx.RIGHT|wx.TOP, 5 )
         sbSizer_3.Add ( self.pickMaskBrowser , 0, wx.ALIGN_LEFT|wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, 5 )
@@ -222,7 +227,7 @@ class panelConfigure(wx.Panel):
         sbSizer_3.Add (self.trackDistanceRadio, 0, wx.ALIGN_LEFT|wx.LEFT|wx.RIGHT|wx.TOP, 2 )
         sbSizer_3.Add (self.trackVirtualBM, 0, wx.ALIGN_LEFT|wx.LEFT|wx.RIGHT|wx.TOP, 2 )
         sbSizer_3.Add (self.trackPosition, 0, wx.ALIGN_LEFT|wx.LEFT|wx.RIGHT|wx.TOP, 2 )
-  
+
         lowerSizer.Add(sbSizer_3, -1, wx.EXPAND|wx.ALL, 5)
 
         self.SetSizer(lowerSizer)
@@ -232,14 +237,14 @@ class panelConfigure(wx.Panel):
         """
         check which source is ticked and what is the associated value
         """
-        
+
         for (r, s), st in zip(self.controls,range(3)):
             if r.GetValue():
                 source = s.GetValue()
                 sourceType = st
-                
+
         return source, sourceType
-        
+
     def __getTrackingType(self):
         """
         return which tracking we are chosing
@@ -248,7 +253,7 @@ class panelConfigure(wx.Panel):
         if self.trackDistanceRadio.GetValue(): trackType = "DISTANCE"
         elif self.trackVirtualBM.GetValue(): trackType = "VBS"
         elif self.trackPosition.GetValue(): trackType = "XY_COORDS"
-        
+
         return trackType
 
     def onPlay (self, event=None):
@@ -257,7 +262,7 @@ class panelConfigure(wx.Panel):
         if self.thumbnail:
             self.thumbnail.Play()
             self.btnStop.Enable(True)
-        
+
     def onStop (self, event=None):
         """
         """
@@ -300,7 +305,7 @@ class panelConfigure(wx.Panel):
         self.thumbnail.track = track
         if self.thumbnail.hasMonitor():
                 self.thumbnail.mon.isSDMonitor = isSDMonitor
-        
+
         #update first static box
         active = self.thumbnail.hasMonitor()
         self.applyButton.Enable ( active )
@@ -313,7 +318,7 @@ class panelConfigure(wx.Panel):
         #update second static box
         for radio, src in self.controls:
             src.Enable(False); src.SetValue('')
-      
+
         radio, src = self.controls[self.sourceType]
         radio.SetValue(True); src.Enable(True)
         src.SetValue(self.source)
@@ -333,9 +338,9 @@ class panelConfigure(wx.Panel):
 
     def onChangeSource(self, event):
         """
-        
+
         """
-        
+
         radio_selected = event.GetEventObject()
 
         for radio, source in self.controls:
@@ -343,7 +348,7 @@ class panelConfigure(wx.Panel):
                 source.Enable(True)
             else:
                 source.Enable(False)
-        
+
         self.applyButton.Enable(True)
 
 
@@ -355,18 +360,18 @@ class panelConfigure(wx.Panel):
         track = self.activateTracking.GetValue()
         self.mask_file = self.pickMaskBrowser.GetValue()
         self.trackType = self.__getTrackingType()
-        
+
         if self.thumbnail:
-           
+
             if sourceType > 0: camera = source
             else: camera = self.WebcamsList.index(source)
 
             self.thumbnail.source = camera
             self.thumbnail.sourceType = sourceType
-            
+
             #Change the source text
             self.currentSource.SetValue( os.path.split(source)[1] )
-            
+
             #Set thumbnail's source
             self.thumbnail.setMonitor(camera)
 
@@ -374,13 +379,13 @@ class panelConfigure(wx.Panel):
             self.btnPlay.Enable(True)
             self.activateTracking.Enable(True)
             self.pickMaskBrowser.Enable(True)
-        
+
             self.saveMonitorConfiguration()
-        
+
     def saveMonitorConfiguration(self):
         """
         """
-        
+
         options.SetMonitor(self.monitor_number,
                            self.thumbnail.sourceType,
                            self.thumbnail.source+1,
@@ -397,42 +402,47 @@ class panelConfigure(wx.Panel):
         """
         if self.thumbnail:
             self.thumbnail.track = event.IsChecked()
-            
+
     def onSDMonitor(self, event):
         """
         """
         if self.thumbnail:
             self.thumbnail.mon.isSDMonitor = event.IsChecked()
 
-        
+
 class panelOne(wx.Panel):
     """
     Panel number One
     All the thumbnails
     """
     def __init__(self, parent):
-        
+
         wx.Panel.__init__(self, parent)
-    
+
         monitor_number = options.GetOption("Monitors")
         tn_size = options.GetOption("ThumbnailSize")
-       
+
         self.temp_source  = ''
         self.source = ''
         self.sourceType = -1
-        
+
         self.scrollThumbnails = panelGridView(self, gridSize=monitor_number, thumbnailSize=tn_size)
         self.lowerPanel = panelConfigure(self)
-        
+
         self.PanelOneSizer = wx.BoxSizer(wx.VERTICAL)
         self.PanelOneSizer.Add(self.scrollThumbnails, 1, wx.EXPAND, 0)
         self.PanelOneSizer.Add(self.lowerPanel, 0, wx.EXPAND, 0)
-        self.SetSizer(self.PanelOneSizer)  
+        self.SetSizer(self.PanelOneSizer)
 
-        
+
     def StopPlaying(self):
         """
         """
         self.lowerPanel.onStop()
-        
 
+    def onDestroy(self):
+        monitor_number = options.GetOption("Monitors")
+        tn_size = options.GetOption("ThumbnailSize")
+
+        self.scrollThumbnails.onRefresh(self, gridSize=monitor_number, thumbnailSize=tn_size)
+        #self.lowerPanel.onRefresh(self)
