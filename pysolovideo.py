@@ -1,26 +1,26 @@
 # -*- coding: utf-8 -*-
 #
 #       pvg.py pysolovideogui
-#       
+#
 #
 #       Copyright 2011 Giorgio Gilestro <giorgio@gilest.ro>
-#       
+#
 #       This program is free software; you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
 #       the Free Software Foundation; either version 2 of the License, or
 #       (at your option) any later version.
-#       
+#
 #       This program is distributed in the hope that it will be useful,
 #       but WITHOUT ANY WARRANTY; without even the implied warranty of
 #       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #       GNU General Public License for more details.
-#       
+#
 #       You should have received a copy of the GNU General Public License
 #       along with this program; if not, write to the Free Software
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
-#       
-#     
+#
+#
 """Version 1.4
 
 Each Monitor has a camera that can be: realCam || VirtualCamMovies || VirtualCamFrames
@@ -33,19 +33,19 @@ Algorithm for motion analysis:
     PIL through kmeans (vector quantization)
     http://en.wikipedia.org/wiki/Vector_quantization
     http://stackoverflow.com/questions/3923906/kmeans-in-opencv-python-interface
-    
+
     Version 1.0
     Blob detection through CV
     Annoying mem leak associated to CV
     #http://opencv-users.1802565.n2.nabble.com/Why-is-cvClearMemStorage-not-exposed-through-the-Python-interface-td7229752.html
-    
+
     Version 1.2
     Now all the video processing is handled through CV2, including contour detection
-    
+
     Version 1.3
     Classes Arena and Monitor fuse. Class ROImask is born
-    
-    
+
+
 Current Data format
     #0 rowline
     #1 date
@@ -55,10 +55,10 @@ Current Data format
     #5 tracktype (0,1,2)
     #6 is a monitor with sleep deprivation capabilities? (n/a)
     #7 monitor number, not yet implemented (n/a)
-    #8 unused 
+    #8 unused
     #9 is light on or off (n/a)
     #10 actual activity (normally 32 datapoints)
-    
+
 """
 
 
@@ -97,15 +97,15 @@ class runningAvgComparison():
     For each value that is used to update,
     it returns also information on whether it is an outlier
     """
-    
+
     def __init__(self):
         """
         """
         self.__tot_sum = 0
         self.__n = 0
         self.__sq_diff = 0
-    
-        
+
+
     def update(self, value, outlier=2):
         """
         Take a running value and returns:
@@ -117,14 +117,14 @@ class runningAvgComparison():
 
         self.__tot_sum += value
         self.__n += 1
-        
+
         mean = self.__tot_sum / self.__n
         self.__sq_diff += np.square(value - mean)
-        
+
         std = np.sqrt(self.__sq_diff / self.__n) or 1
         distance = (value - mean) / std
         outside = distance >= outlier
-        
+
         return mean, std, distance, outside
 
 
@@ -132,7 +132,7 @@ class Cam:
     """
     Functions and properties inherited by all cams
     """
-    
+
     def saveSnapshot(self, filename, quality=90, timestamp=False):
         """
         """
@@ -144,12 +144,12 @@ class Cam:
         """
         """
         return 0
-        
+
     def getSerialNumber(self):
         """
         """
         return 0
-        
+
     def getBlackFrame( self, resolution=(800,600) ):
         """
         """
@@ -158,7 +158,7 @@ class Cam:
         #blackframe = cv2.cvtColor(blackframe, cv2.GRAY2COLOR_BGR)
         cv2.putText(blackframe, "NO INPUT", (int(w/4), int(h/2)), cv2.FONT_HERSHEY_PLAIN, 2, (255,255,255), 1)
         return blackframe
-    
+
 
 class piCamera(Cam):
     """
@@ -167,23 +167,23 @@ class piCamera(Cam):
 
     """
     def __init__(self, devnum=0, resolution=(800, 600), use_network=True):
-        
+
         self.camera = 0
         self.resolution = resolution
         self.scale = False
         self.image_queue = self.getBlackFrame(resolution)
-        
+
         if use_network:
             self.startNetworkStream()
         else:
             self.__initCamera()
-        
+
     def __initCamera(self):
         """
         """
         self.camera = picamera.PiCamera()
         self.camera.resolution = self.resolution
-        
+
     def startNetworkStream(self, port=8000):
         """
         """
@@ -191,37 +191,37 @@ class piCamera(Cam):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind(('', port))
-<<<<<<< HEAD
+#<<<<<<< HEAD
         print ("Live stream socket listening on port {p}...".format(p=port))
-=======
-        print "Live stream socket listening on port {p}...".format(p=port)
->>>>>>> 2c18142d99048230a47ad507b4237c753bbd75ed
+#=======
+#        print "Live stream socket listening on port {p}...".format(p=port)
+#>>>>>>> 2c18142d99048230a47ad507b4237c753bbd75ed
         self.pipe = None
-        
+
         self.socket.listen(5)
 
         self.socket_thread_1 = threading.Thread(target=self.socket_listen)
-<<<<<<< HEAD
+#<<<<<<< HEAD
         self.socket_thread_1.daemon=True
         self.socket_thread_2 = threading.Thread(target=self.socket_stream)
         self.socket_thread_2.daemon=True
-=======
-        self.socket_thread_2 = threading.Thread(target=self.socket_stream)
->>>>>>> 2c18142d99048230a47ad507b4237c753bbd75ed
+#=======
+#        self.socket_thread_2 = threading.Thread(target=self.socket_stream)
+#>>>>>>> 2c18142d99048230a47ad507b4237c753bbd75ed
         self.keepSocket = True
-        
+
         self.socket_thread_1.start()
         self.socket_thread_2.start()
-        
+
     def stopNetworkStream(self):
         """
         """
-        self.keepSocket = False    
-                
-        
+        self.keepSocket = False
+
+
     def socket_listen(self):
         """
-        """    
+        """
 
         while self.keepSocket:
             print "listening"
@@ -236,9 +236,9 @@ class piCamera(Cam):
     def socket_stream(self):
         """
         """
-        
+
         while self.keepSocket:
-            
+
             try:
 
                 with picamera.PiCamera() as camera:
@@ -259,7 +259,7 @@ class piCamera(Cam):
                         image = cv2.imdecode(data, 1)
                         # Convert RGB to BGR
                         self.image_queue = image[:, :, ::-1]
-                        
+
                         if self.pipe:
                             # Write the length of the capture to the stream and flush to
                             # ensure it actually gets sent
@@ -308,7 +308,7 @@ class piCamera(Cam):
 
     def setResolution(self, (x, y)):
         self.camera.resolution = (x, y)
-        
+
     def getResolution(self):
         return self.camera.resolution
 
@@ -317,7 +317,7 @@ class piCamera(Cam):
         Added for compatibility with other cams
         """
         return False
-    
+
     def hasSource(self):
         """
         Is the camera active?
@@ -328,12 +328,12 @@ class piCamera(Cam):
     def getImage(self):
         """
         """
-        frame = self.image_queue 
+        frame = self.image_queue
         if self.scale:
             frame = cv2.resize( frame, self.resolution )
-        
+
         return frame, self.getFrameTime()
-    
+
 class realCam(Cam):
     """
     a realCam class will handle a webcam connected to the system
@@ -344,9 +344,9 @@ class realCam(Cam):
         self.devnum=devnum
         self.resolution = resolution
         self.scale = False
-        
+
         self.__initCamera()
-        
+
     def __initCamera(self):
         """
         """
@@ -368,10 +368,10 @@ class realCam(Cam):
         #http://stackoverflow.com/questions/11420748/setting-camera-parameters-in-opencv-python
         self.camera.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, x)
         self.camera.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, y)
-        
+
         x1, y1 = self.getResolution()
         self.scale = ( (x, y) != (x1, y1) ) # if the camera does not support resolution, we need to scale the image
-        
+
     def getResolution(self):
         """
         Return real resolution
@@ -379,23 +379,23 @@ class realCam(Cam):
         x1 = self.camera.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH)
         y1 = self.camera.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)
         return (int(x1), int(y1))
-        
+
 
     def getImage( self ):
         """
         Returns frame, timestamp
         """
-       
+
         if not self.camera:
             self.__initCamera()
-        
+
         __, frame = self.camera.read()
-        
+
         try:
             frame.shape > 0
         except:
             frame = self.getBlackFrame()
-        
+
         if self.scale:
             frame = cv2.resize( frame, self.resolution )
 
@@ -406,18 +406,18 @@ class realCam(Cam):
         Added for compatibility with other cams
         """
         return False
-        
+
     def close(self):
         """
-        Closes the connection 
+        Closes the connection
         http://stackoverflow.com/questions/15460706/opencv-cv2-in-python-videocapture-not-releasing-camera-after-deletion
         """
         print "attempting to close stream"
 
         self.camera.release
         self.camera = None
-        
-        
+
+
     def getSerialNumber(self):
         """
         Uses pyUSB
@@ -433,9 +433,9 @@ class realCam(Cam):
                 _ , serial = o.split("=")
             except:
                 pass
-            
+
         return serial
-            
+
     def hasSource(self):
         """
         Is the camera active?
@@ -451,28 +451,28 @@ class virtualCamMovie(Cam):
     def __init__(self, path, step = None, start = None, end = None, loop=False, resolution=None):
         """
         Specifies some of the parameters for working with the movie:
-        
+
             path        the path to the file
-            
+
             step        distance between frames. If None, set 1
-            
+
             start       start at frame. If None, starts at first
-            
+
             end         end at frame. If None, ends at last
-            
+
             loop        False   (Default)   Does not playback movie in a loop
                         True                Playback in a loop
-        
+
         """
         self.path = path
-        
+
         if start < 0: start = 0
         self.start = start or 0
         self.currentFrame = self.start
 
         self.step = step or 1
         if self.step < 1: self.step = 1
-        
+
         self.loop = loop
 
         self.capture = cv2.VideoCapture(self.path)
@@ -480,7 +480,7 @@ class virtualCamMovie(Cam):
         #finding the input resolution
         w = self.capture.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH)
         h = self.capture.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)
-        
+
         self.in_resolution = (int(w), int(h))
         self.resolution = self.in_resolution
 
@@ -490,8 +490,8 @@ class virtualCamMovie(Cam):
         self.totalFrames = self.getTotalFrames()
         if end < 1 or end > self.totalFrames: end = self.totalFrames
         self.lastFrame = end
-       
-       
+
+
     def getResolution(self):
         """
         Returns frame resolution as tuple (w,h)
@@ -500,21 +500,21 @@ class virtualCamMovie(Cam):
         y = self.capture.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)
 
         return (x,y)
-        
+
 
     def getFrameTime(self, asString=None):
         """
         Return the time of the frame
         """
-        
+
         frameTime = self.capture.get(cv2.cv.CV_CAP_PROP_POS_MSEC)
-        
+
         if asString:
             frameTime = str( datetime.timedelta(seconds=frameTime / 100.0) )
             return '%s - %s/%s' % (frameTime, self.currentFrame, self.totalFrames) #time.asctime(time.localtime(fileTime))
         else:
             return frameTime / 1000.0 #returning seconds compatibility reasons
-    
+
     def getImage(self):
         """
         Returns frame, timestamp
@@ -528,24 +528,24 @@ class virtualCamMovie(Cam):
             frame.shape > 0
         except:
             frame = self.getBlackFrame()
-            
-        
+
+
         self.currentFrame += self.step
-            
+
         #elif self.currentFrame > self.lastFrame and not self.loop: return False
 
         if self.scale:
             frame = cv2.resize(frame, self.resolution)
 
         return frame, self.getFrameTime()
-      
+
     def setResolution(self, w, h):
         """
         Changes the output resolution
         """
         self.resolution = (w, h)
         self.scale = (self.resolution != self.in_resolution)
-    
+
     def getTotalFrames(self):
         """
         Returns total number of frames
@@ -558,7 +558,7 @@ class virtualCamMovie(Cam):
         """
         Are we processing the last frame in the movie?
         """
-        
+
         if ( self.currentFrame >= self.totalFrames ) and not self.loop:
             return True
         elif ( self.currentFrame >= self.totalFrames ) and self.loop:
@@ -590,10 +590,10 @@ class virtualCamFrames(Cam):
         self.loop = False
 
         fp = os.path.join(self.path, self.fileList[0])
-        
+
         frame = cv2.imread(fp,cv2.CV_LOAD_IMAGE_COLOR)
         self.in_resolution = frame.shape
-        
+
         if not resolution: resolution = self.in_resolution
         self.resolution = resolution
         self.scale = (self.in_resolution != self.resolution)
@@ -608,19 +608,19 @@ class virtualCamFrames(Cam):
         manual = False
         if manual:
             return self.currentFrame
-        
+
         if fname and asString:
             fileTime = os.stat(fname)[-2]
             return time.asctime(time.localtime(fileTime))
         elif fname and not asString:
             fileTime = os.stat(fname)[-2]
             return fileTime
-            
+
     def __populateList__(self, start, end, step):
         """
         Populate the file list
         """
-        
+
         fileList = []
         fileListTmp = os.listdir(self.path)
 
@@ -643,7 +643,7 @@ class virtualCamFrames(Cam):
 
         try:
             frame = cv2.imread(fp,cv2.CV_LOAD_IMAGE_COLOR)
-            
+
         except:
             print ( 'error with image %s' % fp )
             raise
@@ -652,15 +652,15 @@ class virtualCamFrames(Cam):
             frame = cv2.resize(frame, self.resolution)
 
         self.last_time = self.getFrameTime()
-    
+
         return frame, self.last_time
-    
+
     def getTotalFrames(self):
         """
         Return the total number of frames
         """
         return self.totalFrames
-        
+
     def isLastFrame(self):
         """
         Are we processing the last frame in the folder?
@@ -672,7 +672,7 @@ class virtualCamFrames(Cam):
             self.currentFrame = 0
             return False
         else:
-            return False        
+            return False
 
     def setResolution(self, w, h):
         """
@@ -680,8 +680,8 @@ class virtualCamFrames(Cam):
         """
         self.resolution = (w, h)
         self.scale = (self.resolution != self.in_resolution)
-        
-        
+
+
     def getResolution(self):
         """
         Return frame resolution
@@ -692,24 +692,24 @@ class virtualCamFrames(Cam):
     def compressAllImages(self, compression=90, resolution=(960,720)):
         """
         FIX THIS: is this needed?
-        Load all images one by one and save them in a new folder 
+        Load all images one by one and save them in a new folder
         """
         x,y = resolution[0], resolution[1]
         if self.isVirtualCam:
             in_path = self.cam.path
             out_path = os.path.join(in_path, 'compressed_%sx%s_%02d' % (x, y, compression))
             os.mkdir(out_path)
-            
+
             for img in self.cam.fileList:
                 f_in = os.path.join(in_path, img)
                 im = Image.open(f_in)
-                if im.size != resolution: 
+                if im.size != resolution:
                     im = im.resize(resolution, Image.ANTIALIAS)
-                
+
                 f_out = os.path.join(out_path, img)
                 im.save (f_out, quality=compression)
 
-            return True    
+            return True
 
         else:
             return False
@@ -727,36 +727,36 @@ class ROImask():
     This is the Class handling the info about the ROI Mask
     This classes adds and removes ROI, checks if a point is in ROI,
     load and saves ROIS to file
-    
+
     No tracking here
-   
+
     """
     def __init__(self, parent):
         self.monitor = parent
-        
+
         self.ROIS = [] #Regions of interest
         self.beams = [] # beams: absolute coordinates
         self.ROAS = [] #Regions of Action
         self.points_to_track = []
         self.referencePoints = ((),())
         self.serial = None
-        
-        
+
+
     def relativeBeams(self):
         """
         Return the coordinates of the beam
         relative to the ROI to which they belong
         """
-        
+
         newbeams = []
-        
+
         for ROI, beam in zip(self.ROIS, self.beams):
 
                 rx, ry = self.__ROItoRect(ROI)[0]
                 (bx0, by0), (bx1, by1) = beam
-                
+
                 newbeams.append( ( (bx0-rx, by0-ry), (bx1-rx, by1-ry) ) )
-                
+
         return newbeams
 
     def __ROItoRect(self, ROIcoords):
@@ -777,7 +777,7 @@ class ROImask():
         Calculate the distance between two cartesian points
         """
         return np.sqrt((x2-x1)**2 + (y2-y1)**2)
-        
+
     def __getMidline (self, coords):
         """
         Return the position of each ROI's midline
@@ -786,14 +786,14 @@ class ROImask():
         (x1,y1), (x2,y2) = self.__ROItoRect(coords)
 
         horizontal = abs(x2 - x1) > abs(y2 - y1)
-        
+
         if horizontal:
             xm = x1 + (x2 - x1)/2
-            return (xm, y1), (xm, y2) 
+            return (xm, y1), (xm, y2)
         else:
             ym = y1 + (y2 - y1)/2
             return (x1, ym), (x2, ym)
-    
+
     def calibrate(self, p1, p2, cm=1):
         """
         The distance between p1 and p2 will be set to be X cm
@@ -801,33 +801,33 @@ class ROImask():
         """
         cm = float(cm)
         dpx = self.__distance(p1, p2)
-        
-        self.ratio = dpx / cm  
-        
+
+        self.ratio = dpx / cm
+
         return self.ratio
 
     def pxToCm(self, distance_px):
         """
         Converts distance from pixels to cm
         """
-        
+
         if self.ratio:
             return distance_px / self.ratio
         else:
             print "You need to calibrate the mask first!"
             return distance_px
-            
+
     def addROI(self, coords, n_flies):
         """
         Add a new ROI to the arena
         """
         good_coords = (np.array(coords)>=0).all()
-        
-        if good_coords: 
+
+        if good_coords:
             self.ROIS.append( coords )
-            self.beams.append ( self.__getMidline (coords)  ) 
+            self.beams.append ( self.__getMidline (coords)  )
             self.points_to_track.append(n_flies)
-        
+
     def getROI(self, n):
         """
         Returns the coordinates of the nth crop area
@@ -837,7 +837,7 @@ class ROImask():
         else:
             coords = self.ROIS[n]
         return coords
-        
+
     def delROI(self, n):
         """
         removes the nth crop area from the list
@@ -853,13 +853,13 @@ class ROImask():
             self.beams = []
             self.points_to_track = []
             self.referencePoints == ((),())
-            
+
     def getROInumber(self):
         """
         Return the number of current active ROIS
         """
         return len(self.ROIS)
-        
+
     def saveROIS(self, filename, serial=None):
         """
         Save the current crop data to a file
@@ -885,7 +885,7 @@ class ROImask():
                     tup.append(p)
                 self.ROIS.append(tuple(tup))
                 tup=[]
-            
+
             self.points_to_track = data['pointsToTrack']
             self.referencePoints = data['referencePoints']
             if self.referencePoints == "none":
@@ -895,9 +895,9 @@ class ROImask():
             else:
                 self.serial = data['serial']
             cf.close()
-            
+
             for coords in self.ROIS:
-                self.beams.append ( self.__getMidline (coords)  ) 
+                self.beams.append ( self.__getMidline (coords)  )
             return True
         except:
             return False
@@ -908,12 +908,12 @@ class ROImask():
         resized images
         """
         newROIS = []
-        
+
         ox, oy = origSize
         nx, ny = newSize
         xp = float(ox) / nx
         yp = float(oy) / ny
-        
+
         for ROI in self.ROIS:
             nROI = []
             for pt in ROI:
@@ -940,7 +940,7 @@ class ROImask():
             http://opencv2.itseez.com/doc/tutorials/imgproc/shapedescriptors/point_polygon_test/point_polygon_test.html
             """
             x, y = pt
-            
+
             n = len(poly)
             inside = False
 
@@ -958,11 +958,11 @@ class ROImask():
 
             return inside
 
-        
+
         for ROI in self.ROIS:
             if __point_in_poly(pt, ROI):
                 return self.ROIS.index(ROI)
-        
+
         return -1
 
     def ROIStoRect(self):
@@ -973,7 +973,7 @@ class ROImask():
         newROIS = []
         for ROI in self.ROIS:
             newROIS. append ( self.__ROItoRect(ROI) )
-            
+
         return newROIS
 
     def autoMask(self, pt1, pt2):
@@ -986,37 +986,37 @@ class ROImask():
         rows = 16
         cols = 2
         food = .10
-        
+
         vials = rows * cols
         ROI = [None,] * vials
-        
+
         (x, y), (x1, y1) = pt1, pt2
         w, h = (x1-x), (y1-y)
 
         d = h / rows
         l = (w / cols) - int(food/2*w)
-        
+
         k = 0
         for v in xrange(rows):
             ROI[k] = (x, y), (x+l, y+d)
             ROI[k+1] = (x1-l, y) , (x1, y+d)
             k+=2
             y+=d
-        
+
         nROI = []
         for R in ROI:
             (x, y), (x1, y1) = R
             self.addROI( ( (x,y), (x,y1), (x1,y1), (x1,y) ), 1)
-            
+
         return vials
-    
+
     def findOuterFrame(self, img, thresh=50):
         """
         EXPERIMENTAL
-        Find the greater square 
+        Find the greater square
         THIS NEED TO BE TRANSLATED TO CV2 - AT THE MOMENT IS NOT USED
         """
-        
+
         def angle(pt1, pt2, pt0):
             """
             Return the angle between three points
@@ -1026,8 +1026,8 @@ class ROImask():
             dx2 = pt2[0] - pt0[0]
             dy2 = pt2[1] - pt0[1]
             return (dx1*dx2 + dy1*dy2)/np.sqrt((dx1*dx1 + dy1*dy1)*(dx2*dx2 + dy2*dy2) + 1e-10)
-        
-        
+
+
         N = 11
         sz = (img.width & -2, img.height & -2)
         storage = cv2.CreateMemStorage(0)
@@ -1049,7 +1049,7 @@ class ROImask():
             # extract the c-th color plane
             channels = [None, None, None]
             channels[c] = tgray
-            cv2.Split(subimage, channels[0], channels[1], channels[2], None) 
+            cv2.Split(subimage, channels[0], channels[1], channels[2], None)
             for l in xrange(N):
                 # hack: use Canny instead of zero threshold level.
                 # Canny helps to catch squares with gradient shading
@@ -1066,7 +1066,7 @@ class ROImask():
 
                 if not contours:
                     continue
-                    
+
                 contour = contours
                 totalNumberOfContours = 0
                 while(contour.h_next() != None):
@@ -1078,11 +1078,11 @@ class ROImask():
                 contourNumber = 0
 
                 while(contourNumber < totalNumberOfContours):
-                    
+
                     #print 'contour #%d' % contourNumber
                     #print 'number of points in contour %d' % len(contour)
                     contourNumber = contourNumber+1
-                    
+
                     # approximate contour with accuracy proportional
                     # to the contour perimeter
                     result = cv2.ApproxPoly(contour, storage,
@@ -1094,8 +1094,8 @@ class ROImask():
                     # Note: absolute value of an area is used because
                     # area may be positive or negative - in accordance with the
                     # contour orientation
-                    if(len(result) == 4 and 
-                        abs(cv2.ContourArea(result)) > 500 and 
+                    if(len(result) == 4 and
+                        abs(cv2.ContourArea(result)) > 500 and
                         cv2.CheckContourConvexity(result)):
                         s = 0
                         for i in xrange(5):
@@ -1113,11 +1113,11 @@ class ROImask():
                             squares.append(pt)
                             print ('current # of squares found %d' % len(squares))
                     contour = contour.h_next()
-         
-        return squares    
+
+        return squares
 
 
-    
+
 class Monitor(object):
     """
     The main monitor class
@@ -1129,7 +1129,7 @@ class Monitor(object):
         A Monitor contains a cam, which can be either virtual or real.
         Everything is handled through openCV
         """
-        
+
         self.grabMovie = False
         self.writer = None
         self.cam = None
@@ -1137,50 +1137,50 @@ class Monitor(object):
         self.isTracking = False
 
         self.referencePoints = None
-        
+
         self.mask = ROImask(self)
 
         self.__last_time = 0
-        self.__temp_FPS = 0 
+        self.__temp_FPS = 0
         self.__processingFPS = 0
         self.__rowline = 0
         #self.__image_queue = Queue
         self.__image_queue = None # for one frame queue we don't need a real queue.
-        
+
         # TO DO: NOT IMPLEMENTED YET
         self.ratio = 0 # used for mask calibration, px to cm
-        
+
         self.trackType = 1
         self.minuteFPS = runningAvgComparison()
-        
+
         self.SDserialPort = None
         self.inactivity_threshold = 7
         self.flyActivity = np.zeros ((0,ACTIVITY_PERIOD), dtype=np.int)
-        
+
         # Buffer arrays
         # shape ( PERIOD (x,y )
         self.__fa = np.zeros( (PERIOD, 2), dtype=np.int )
         # shape ( flies, (x,y) ) Contains the coordinates of the last second (if fps > 1, average)
-        self.fly_last_frame_buffer = np.zeros( (0, 2), dtype=np.int ) 
+        self.fly_last_frame_buffer = np.zeros( (0, 2), dtype=np.int )
         # shape ( flies, PERIOD, (x,y) ) Contains the coordinates of the last minute (or period)
-        self.fly_one_minute_buffer = np.zeros( (0, PERIOD, 2), dtype=np.int ) 
-        
-       
+        self.fly_one_minute_buffer = np.zeros( (0, PERIOD, 2), dtype=np.int )
+
+
         self.__count_seconds = 0
         self.__n = 0
         self.outputFile = None
-      
+
         self.fly_area = runningAvgComparison()
         self.fly_movement = runningAvgComparison()
 
         self.debug_info = {}
 
 
-#######################################################        
-        
-        
-#### DRAWING FUNCTION OF MONITOR ######################        
-    
+#######################################################
+
+
+#### DRAWING FUNCTION OF MONITOR ######################
+
     def __distance( self, (x1, y1), (x2, y2) ):
         """
         Calculate the distance between two cartesian points
@@ -1210,12 +1210,12 @@ class Monitor(object):
 
         for label, value in self.debug_info.iteritems():
             text = "%s: %s" % (label, value)
-                
+
             (x1, y1), ymin = cv2.getTextSize(text, cv2.FONT_HERSHEY_PLAIN, 1, 1)
             y = height - ymin - 2
             cv2.putText(frame, text, (x, y), cv2.FONT_HERSHEY_PLAIN, 1, textcolor, 1)
             height = height - y1*2
-        
+
         return frame
 
     def __addTimeStamp(self, frame, timeStamp):
@@ -1231,9 +1231,9 @@ class Monitor(object):
         y = height - ymin - 2
 
         cv2.putText(frame, text, (x, y), cv2.FONT_HERSHEY_PLAIN, 1, textcolor, 1)
-        
+
         return frame
-        
+
     def __drawROI(self, frame, ROI, color=None, ROInum=None):
         """
         Draw ROI on img using given coordinates
@@ -1246,7 +1246,7 @@ class Monitor(object):
         line_type = cv2.CV_AA
 
         cv2.polylines(frame, np.array([ROI]), isClosed=1, color=color, thickness=1, lineType=line_type, shift=0)
-        
+
         if ROInum is not None:
             x, y = ROI[0]
             textcolor = (255,255,255)
@@ -1263,20 +1263,20 @@ class Monitor(object):
             if not color: color = (255,255,255)
             width = 1
             line_type = cv2.CV_AA
-            
+
             x, y = pt
             a = (x, y-5)
             b = (x, y+5)
             c = (x-5, y)
             d = (x+5, y)
-            
+
             cv2.line(frame, a, b, color, width, line_type, 0)
             cv2.line(frame, c, d, color, width, line_type, 0)
-            
+
             if text: cv2.putText(frame, text, (x, y), cv2.FONT_HERSHEY_PLAIN, 1, (255,255,255), 1)
-        
+
         return frame
-        
+
     def __drawLastSteps(self, frame, fly, steps=5, color=None):
         """
         Draw the last n (default 5) steps of the fly
@@ -1291,12 +1291,12 @@ class Monitor(object):
         cv2.polylines(frame, [points], is_closed=0, color=color, thickness=1, lineType=line_type, shift=0)
 
         return frame
-        
 
-#######################################################        
-        
-#### VARIOUS FUNCTIONS ###############################        
-        
+
+#######################################################
+
+#### VARIOUS FUNCTIONS ###############################
+
 
     def __getChannel(self, img, channel='R'):
         """
@@ -1304,32 +1304,32 @@ class Monitor(object):
         """
 
         cn = 'RGB'.find( channel.upper() )
-        
+
         channels = [None, None, None]
         cv2.split(img, channels[0], channels[1], channels[2], None)
         return channels[cn]
 
-        
+
     def getUptime(self):
         """
         """
         delta = (datetime.datetime.now() - self.starttime)
-        
+
         t = datetime.timedelta(seconds=delta.seconds)
         r = self.__rowline
         return t, r
-        
+
 
     def trackingLoop(self, kbdint=False):
         """
         """
         #cv2.namedWindow("preview")
-        
+
         while self.isTracking:
             #frame = self.GetImage(drawROIs = True, selection=None, crosses=None, timestamp=True, draw_path=False)
             frame = self.GetImage(drawROIs = True, selection=None, crosses=None, timestamp=True, draw_path=False)
             #cv2.imshow("preview", frame)
-           
+
 
     def startTracking(self):
         self.track_thread = threading.Thread(target=self.trackingLoop)
@@ -1337,36 +1337,36 @@ class Monitor(object):
         self.starttime = datetime.datetime.now()
 
         self.track_thread.start()
-        
+
     def stopTracking(self):
         self.isTracking = False
-        
-        
+
+
 #######################################################
 
-#### CAM FUNCTION OF MONITOR ##########################       
+#### CAM FUNCTION OF MONITOR ##########################
 
     def __captureFromPICAM(self, resolution=(800,600), options=None):
         """
         Capture from raspberryPI camera
         """
         self.isVirtualCam = False
-        
+
         self.cam = piCamera(resolution)
 
         self.source = 1000
         self.resolution = resolution
         self.numberOfFrames = 0
-       
+
         return self.cam is not None
-        
+
 
     def __captureFromCAM(self, devnum=0, resolution=(800,600), options=None):
         """
         Capture from an actual hardware camera
         """
         self.isVirtualCam = False
-        
+
         try:
             self.cam = realCam(devnum=devnum)
 
@@ -1375,20 +1375,20 @@ class Monitor(object):
             self.cam.setResolution(resolution)
             self.resolution = self.cam.getResolution()
             self.numberOfFrames = 0
-       
+
         except:
             pass
 
         return self.cam is not None
 
-       
+
     def __captureFromMovie(self, camera, resolution=None, options=None):
         """
         Capture from movie file
         """
         self.isVirtualCam = True
         self.source = camera
-        
+
         if options:
             step = options['step']
             start = options['start']
@@ -1403,18 +1403,18 @@ class Monitor(object):
 
         return self.cam is not None
 
-        
+
     def __captureFromFrames(self, camera, resolution=None, options=None):
         """
         """
         self.isVirtualCam = True
         self.source = camera
-        
+
         if options:
             step = options['step']
             start = options['start']
             end = options['end']
-            loop = options['loop'] 
+            loop = options['loop']
 
         try:
             self.cam = virtualCamFrames(path = camera, resolution = resolution)
@@ -1425,7 +1425,7 @@ class Monitor(object):
 
         return self.cam is not None
 
-    
+
     def hasSource(self):
         """
         """
@@ -1433,7 +1433,7 @@ class Monitor(object):
             return self.cam.hasSource()
         else:
             return False
-    
+
     def setSource(self, camera, resolution, options=None):
         """
         Set source intelligently
@@ -1443,7 +1443,7 @@ class Monitor(object):
             camera = int(camera)
         except:
             pass
-            
+
         if type(camera) == int and camera == 1000:
             self.__captureFromPICAM(resolution, options)
         elif type(camera) == int:
@@ -1457,7 +1457,7 @@ class Monitor(object):
             self.debug_info["source"] = camera
             self.debug_info["res"] = "%s,%s" % (resolution)
             self.debug_info["serial"] = self.cam.getSerialNumber()
-        
+
         return self.hasSource()
 
     def close(self):
@@ -1466,11 +1466,11 @@ class Monitor(object):
         """
         self.cam.close()
         self.isTracking = False
-        
+
     def setTracking(self, track, trackType=0, mask_file='', outputFile=''):
         """
         Set the tracking parameters
-        
+
         track       Boolean     Do we do tracking of flies?
         trackType   0           tracking using the virtual beam method
                     1 (Default) tracking calculating distance moved
@@ -1486,35 +1486,35 @@ class Monitor(object):
         self.trackType = int(trackType)
         self.mask_file = mask_file
         self.outputFile = outputFile
-        
+
         if mask_file:
             self.loadROIS(mask_file)
-       
+
     def getFrameTime(self):
         """
         """
         return self.cam.getFrameTime()
-    
+
     def isLastFrame(self):
         """
         Proxy to isLastFrame()
         Handled by camera
         """
         return self.cam.isLastFrame()
-        
+
 
     def saveMovie(self, filename, fps=24, codec='FMP4', startOnKey=False):
         """
-        Determines whether all the frames grabbed through getImage will also 
+        Determines whether all the frames grabbed through getImage will also
         be saved as movie.
-        
+
         filename                           the full path to the file to be written
         fps             24   (Default)     number of frames per second
         codec           FMP4 (Default)     codec to be used
-        
+
         http://stackoverflow.com/questions/5426637/writing-video-with-opencv-python-mac
         """
-        
+
         fourcc = cv2.cv.CV_FOURCC(*[c for c in codec]) # or -1
         self.writer = cv2.VideoWriter(filename, fourcc, fps ,self.resolution )
         self.grabMovie = not startOnKey
@@ -1530,7 +1530,7 @@ class Monitor(object):
         else:
             self.cam.saveSnapshot(filename, quality, timestamp)
 
-    
+
     def SetLoop(self,loop):
         """
         Set Loop on or off.
@@ -1544,17 +1544,17 @@ class Monitor(object):
             return False
 
 
-#######################################################        
-        
-        
-#### ROI FUNCTION OF MONITOR - NOT NEEDED? ############    
-   
+#######################################################
+
+
+#### ROI FUNCTION OF MONITOR - NOT NEEDED? ############
+
     def updateFlyBuffers(self, n, new=False):
         """
         Every time we add a new ROI the array need to be ridimensioned
         """
         if not new:
-            
+
             if n > 0:
                 #these increase by one on the fly axis
 
@@ -1568,18 +1568,18 @@ class Monitor(object):
                     self.fly_last_frame_buffer = np.delete( self.fly_last_frame_buffer, n, axis=0)
                     self.fly_one_minute_buffer = np.delete( self.fly_one_minute_buffer, n, axis=0)
                     self.flyActivity = np.delete (self.flyActivity, n,axis=0)
-            
+
             if n == 0:
-                self.fly_last_frame_buffer = np.zeros( (0, 2), dtype=np.int ) 
+                self.fly_last_frame_buffer = np.zeros( (0, 2), dtype=np.int )
                 self.fly_one_minute_buffer = np.zeros( (0, PERIOD, 2), dtype=np.int )
                 self.flyActivity = np.zeros ((0,ACTIVITY_PERIOD), dtype=np.int)
-        
+
         if new:
             self.updateFlyBuffers(0) # delete first
             self.updateFlyBuffers(n) # then repopulate
-            
+
         self.debug_info["ROIs"] = self.mask.getROInumber()
-        
+
     def getFliesDetected(self):
         """
         Returns how many flies are we actually detecting
@@ -1587,18 +1587,18 @@ class Monitor(object):
         """
         c = (self.fly_last_frame_buffer != FLY_FIRST_POSITION)
         return c.all(axis=1).sum()
-   
+
     def addROI(self, coords, n_flies=1):
         """
         Add the coords for a new ROI and the number of flies we want to track in that area
         selection       (pt1, pt2, pt3, pt4)    A four point selection
         n_flies         1    (Default)      Number of flies to be tracked in that area
         """
-        
+
         self.mask.addROI(coords, n_flies)
         n = self.mask.getROInumber() - self.fly_last_frame_buffer.shape[0]
         self.updateFlyBuffers(n)
-        
+
     def hasROI(self):
         '''
         Return true if at least a single roi is detected
@@ -1620,11 +1620,11 @@ class Monitor(object):
 
         if n >= 0:
             self.updateFlyBuffers(-n)
-        
+
         elif n == -1:
             self.updateFlyBuffers(0)
 
-        
+
     def saveROIS(self, filename=None):
         """
         Save the current crop data to a file
@@ -1632,13 +1632,13 @@ class Monitor(object):
         if not filename: filename = self.mask_file
         self.mask.referencePoints = self.referencePoints
         self.mask.saveROIS( filename, self.cam.getSerialNumber() )
-        
+
     def loadROIS(self, filename=None):
         """
         Load the crop data from a file
         """
         if not filename: filename = self.mask_file
-        
+
         if self.mask.loadROIS(filename):
             nROI = self.mask.getROInumber()
             self.updateFlyBuffers(nROI, new=True)
@@ -1666,17 +1666,17 @@ class Monitor(object):
         Relays to arena calibrate
         """
         return self.mask.calibrate(pt1, pt2, cm)
-        
-        
+
+
     def autoMask(self, pt1, pt2):
         """
         """
         n = self.mask.autoMask(pt1, pt2)
         self.updateFlyBuffers(n)
 
-#######################################################        
-        
-        
+#######################################################
+
+
 #### TRACKING FUNCTIONS OF MONITOR ####################
 
     def getLastSteps(self, fly, steps):
@@ -1688,8 +1688,8 @@ class Monitor(object):
     def addFlyCoords(self, count, fly_coords):
         """
         Add the provided coordinates to the existing list
-        count   int     the fly number in the arena 
-        fly     (x,y)   the coordinates to add 
+        count   int     the fly number in the arena
+        fly     (x,y)   the coordinates to add
         Called for every fly moving in every frame
         """
 
@@ -1698,25 +1698,25 @@ class Monitor(object):
 
         is_first_movement = not ( fly_coords == FLY_FIRST_POSITION )
         distance = self.__distance( previous_position, fly_coords )
-        
+
         avg, std, _, is_outside = self.fly_movement.update(distance, outlier=1)
-        
+
         self.debug_info['FLY_DISTANCE_AVG'] = "%.1f" % avg
         self.debug_info['FLY_DISTANCE_STD'] = "%.1f" % std
-        
+
         if is_outside and not is_first_movement:
             fly = previous_position
-        
+
         # Does a running average for the coordinates of the fly at each frame to fly_one_second_buffer
         # This way the shape of fly_one_second_buffer is always (n, (x,y)) and once a second we just have to add the (x,y)
         # values to flyDataMin, whose shape is (n, 60, (x,y))
         # shape is (n+1, 2) where n is the number of ROIS.
-        
+
         b = self.fly_last_frame_buffer[count]
         self.fly_last_frame_buffer[count] = np.append( b[b!=-1], fly_coords, axis=0).reshape(-1,2).mean(axis=0)
-        
+
         return fly_coords, distance
-        
+
     def compactSeconds(self, FPS, delta):
         """
         Compact the frames collected in the last second
@@ -1733,11 +1733,11 @@ class Monitor(object):
         if self.__count_seconds + 1 >= PERIOD:
             self.writeActivity( fps = avgFPS )
             self.__count_seconds = 0
-            self.__n = 0 
+            self.__n = 0
 
             for i in xrange(0,PERIOD):
                     self.fly_one_minute_buffer[:,i] = self.fly_last_frame_buffer
-            
+
         #growing continously; this is the correct thing to do but we would have problems adding new row with new ROIs
         #self.fly_one_minute_buffer = np.append(self.fly_one_minute_buffer, self.fly_last_frame_buffer, axis=1)
 
@@ -1750,7 +1750,7 @@ class Monitor(object):
         """
         Make sure the monitor has sleepdeprivation capabilities
         """
-        
+
         if (self.SDserialPort != NO_SERIAL_PORT) and self.SDserialPort:
             #return sleepdeprivator.ping(use_serial=False, port=self.SDserialPort)
             return True
@@ -1762,23 +1762,23 @@ class Monitor(object):
         It's time for performing sleep deprivation
         """
         timetoSD = True
-        
+
         #first check that the monitor is able to do SD
         return self.isSDMon() and timetoSD
-        
+
 
     def writeActivity(self, fps=0, extend=True):
         """
         Write the activity to file
         Kind of motion depends on user settings
-        
+
         Called every minute; flies treated at once
         1   09 Dec 11   19:02:19    1   0   1   0   0   0   ?       [actual_activity]
         """
-        
+
         #Here we build the header
         dt = datetime.datetime.fromtimestamp( self.getFrameTime() )
-       
+
         #0 rowline        # computed when writing to file
         #1 date
         date = '%02d %s %s' % (dt.day, month_abbr[dt.month], dt.year-2000)
@@ -1797,21 +1797,21 @@ class Monitor(object):
         unused = 0
         #9 is light on or off
         light = '?'
-        
+
         #10 actual activity (normally 32 datapoints)
-        
+
         activity = []
         row = ''
 
-        if self.trackType == 0: 
+        if self.trackType == 0:
             activity = [self.calculateDistances(),]
-        
+
         elif self.trackType == 1:
             activity = [self.calculateVBM(),]
-        
+
         elif self.trackType == 2:
             activity = self.calculatePosition()
-            
+
         if self.isSD():
             self.calculateImmobility()
             self.sleepDeprive(interval=5)
@@ -1823,7 +1823,7 @@ class Monitor(object):
         else:
             extension = ''
 
-            
+
         for line in activity:
             tt = '%02d:%02d:%02d' % (dt.hour, dt.minute, dt.second)
             dt = dt + datetime.timedelta(seconds=1)
@@ -1836,30 +1836,30 @@ class Monitor(object):
             fh = open(self.outputFile, 'a')
             fh.write(row)
             fh.close()
-            
-    
+
+
     def calculateDistances(self):
         """
         Motion is calculated as distance in px per minutes
         """
-        
+
         # shift by one second left flies, seconds, (x,y)
-        fs = np.roll(self.fly_one_minute_buffer, -1, axis=1) 
-        
+        fs = np.roll(self.fly_one_minute_buffer, -1, axis=1)
+
         x = self.fly_one_minute_buffer[:,:,:1]
         y = self.fly_one_minute_buffer[:,:,1:]
-        
+
         x1 = fs[:,:,:1]
         y1 = fs[:,:,1:]
-        
+
         d = self.__distance((x,y),(x1,y1))
         #we sum everything BUT the last bit of information otherwise we have data duplication
         values = d[:,:-1,:].sum(axis=1).reshape(-1)
-        
+
         activity = '\t'.join( ['%s' % int(v) for v in values] )
         return activity
-            
-            
+
+
     def calculateVBM(self):
         """
         Motion is calculated as virtual beam crossing
@@ -1872,9 +1872,9 @@ class Monitor(object):
 
             (mx1, my1), (mx2, my2) = md
             horizontal = (mx1 == mx2)
-            
+
             fs = np.roll(fd, -1, 0)
-            
+
             x = fd[:,:1]; y = fd[:,1:] # THESE COORDINATES ARE RELATIVE TO THE ROI
             x1 = fs[:,:1]; y1 = fs[:,1:]
 
@@ -1882,29 +1882,29 @@ class Monitor(object):
                 crossed = (x < mx1 ) * ( x1 > mx1 ) + ( x > mx1) * ( x1 < mx1 )
             else:
                 crossed = (y < my1 ) * ( y1 > my1 ) + ( y > my1) * ( y1 < my1 )
-        
+
             values .append ( crossed.sum() )
-        
+
         activity = '\t'.join( [str(v) for v in values] )
-        
+
         return activity
-            
+
     def calculatePosition(self, resolution=1):
         """
-        Simply write out position of the fly at every time interval, as 
+        Simply write out position of the fly at every time interval, as
         decided by "resolution" (seconds)
         """
-        
+
         activity = []
         rois = self.mask.getROInumber()
-        
+
         a = self.fly_one_minute_buffer.transpose(1,0,2) # ( interval, n_flies, (x,y) )
         a = a.reshape(resolution, -1, rois, 2).mean(0)
-        
+
         for fd in a:
             onerow = '\t'.join( ['%s,%s' % (x,y) for (x,y) in fd] )
             activity.append(onerow)
-        
+
         return activity
 
     def calculateImmobility(self):
@@ -1913,9 +1913,9 @@ class Monitor(object):
         Immobility is based on distance and flies are considered immobile if they have not moved
         for at least threshold (px) * interval during the last interval
         """
-        
+
         #First calculate distance
-        fs = np.roll(self.fly_one_minute_buffer, -1, axis=1) 
+        fs = np.roll(self.fly_one_minute_buffer, -1, axis=1)
         x = self.fly_one_minute_buffer[:,:,:1]
         y = self.fly_one_minute_buffer[:,:,1:]
         x1 = fs[:,:,:1]
@@ -1927,13 +1927,13 @@ class Monitor(object):
         #Add the values for distance in the buffer array
         self.flyActivity = np.roll (self.flyActivity, -1, axis=1)
         self.flyActivity[:,-1] = values
-        
-    
+
+
     def sleepDeprive(self, interval=None, threshold=None):
         """
         returns a list of ROIs where flies have not moved during the last interval
         """
-        
+
         if interval == None:
             interval =  self.inactivity_threshold
 
@@ -1941,10 +1941,10 @@ class Monitor(object):
             threshold = float (self.debug_info['FLY_AREA_AVG']) * interval
         else:
             threshold = 20 * interval
-            
+
         asleep = self.flyActivity[:,interval:-1].sum(axis=1) < threshold
         ROIstomove = np.where( (asleep==True))[0].tolist()
-        
+
         sleepdeprivator.deprive(ROIstomove, use_serial=True, port=self.SDserialPort)
 
 
@@ -1952,13 +1952,13 @@ class Monitor(object):
         """
         Decides what to do with the data
         Called every frame
-        
+
         In the live stream we find the coordinates of the flies multiple time per second
         but we don't need so much information. This function will calculate how much time
-        has elapsed from the last time we analysed a frame, calculate the FPS and store the 
+        has elapsed from the last time we analysed a frame, calculate the FPS and store the
         data in buffer that will get processed and saved to file
         """
-        
+
         ct = time
         self.__temp_FPS += 1
         delta = ( ct - self.__last_time)
@@ -1969,57 +1969,57 @@ class Monitor(object):
             self.__processingFPS = self.__temp_FPS; self.__temp_FPS = 0
 
             self.debug_info['FPS'] = self.__processingFPS
-         
+
     def GetImage(self, drawROIs = False, selection=None, crosses=None, timestamp=False, draw_path=False):
         """
         GetImage(self, drawROIs = False, selection=None, timestamp=0)
-        
+
         drawROIs       False        (Default)   Will draw all ROIs to the image
-                       True        
-        
+                       True
+
         selection      (x1,y1,x2,y2)            A four point selection to be drawn
-        
+
         crosses        (x,y),(x1,y1),...        A list of tuples containing single point coordinates
-        
+
         timestamp      True                     Will add a timestamp to the bottom right corner
-                       False        (Default)   
-                       
+                       False        (Default)
+
         draw_path      True         (Default)   Draw the last steps of each fly to a path
                        False
-        
+
         Returns the last collected image
         """
 
         ##self.imageCount += 1
         frame, time = self.cam.getImage()
         #print time
-        
+
         # TRACKING RELATED
-        if self.isTracking and self.mask.ROIS and frame.any(): 
+        if self.isTracking and self.mask.ROIS and frame.any():
             frame, positions = self.trackByContours(frame)
-            
+
             # for each frame adds fly coordinates to all ROIS. Also do some filtering to remove false positives
             for (fly_number, fly_coords) in positions:
-                
+
                 fly_coords, distance = self.addFlyCoords(fly_number, fly_coords)
-                
+
                 if distance > 0:
                     cross_color = (255,255,255)
                 else:
                     cross_color = (255,0,0)
-                
+
                 # draw position of the fly as cross with or without some verbose
                 if fly_coords and self.drawing:
                     frame = self.__drawCross(frame, fly_coords, color=cross_color)
-                    #frame = self.__drawCross(frame, fly_coords, text=str(fly_number+1)+str(fly_coords)) 
-                
+                    #frame = self.__drawCross(frame, fly_coords, text=str(fly_number+1)+str(fly_coords))
+
                 if draw_path and self.drawing:
                     frame = self.__drawLastSteps(frame, fly_number, steps=5) # draw path of the fly
-            
-            self.processFlyMovements(time)      
+
+            self.processFlyMovements(time)
             self.debug_info['DETECTED'] = self.getFliesDetected()
 
-        
+
         # NOT TRACKING RELATED
         if self.referencePoints == None:
             self.referencePoints = self.findReferenceCircles(frame)
@@ -2034,39 +2034,39 @@ class Monitor(object):
 
         #Drawing the reference circles
         if self.drawing and drawROIs:
-            
+
             if self.referencePoints != None :
                 #The currently detected circle
                 for i in self.referencePoints[0,:]:
                     x, y, r = i
                     cv2.circle(frame,(i[0],i[1]),i[2],(255,255,255),2)
                     frame = self.__drawCross (frame, (x,y), color=(0,0,255))
-            
+
             #The circle in the mask
             if self.mask.referencePoints != ((),()) and self.mask.referencePoints != None:
                 for i in self.mask.referencePoints[0,:]:
                     cv2.circle(frame,(i[0],i[1]),i[2],(0,255,0),1)  # draw the outer circle
                     cv2.circle(frame,(i[0],i[1]),2,(0,0,255),3)     # draw the center of the circle
 
-        
+
         if self.drawing and selection:
             frame = self.__drawROI(frame, selection, color=(0,0,255)) # draw red selection
-            
+
         if self.drawing and crosses:
             for pt in crosses:
                 frame = self.__drawCross (frame, pt, color=(0,0,255)) # draw red crosses
-            
 
-        if self.drawing and timestamp: 
+
+        if self.drawing and timestamp:
             frame = self.__drawDebugInfo(frame)
             frame = self.__addTimeStamp(frame, time)
 
-        if self.grabMovie: 
+        if self.grabMovie:
             self.writer.write(frame)
-            
+
         if self.grabMovie and self.isLastFrame():
             self.writer.release()
-        
+
         #self.__image_queue.put(frame)
         self.__image_queue = frame
         return frame
@@ -2082,13 +2082,13 @@ class Monitor(object):
         Track flies in ROIs using findContour algorithm in opencv
         Each frame is compared against the moving average
         take an opencv frame as input and return a frame as output with path, flies and mask drawn on it
-        
+
         draw_path    True | False   draw_path of the fly
         fliesPerROI 1              limit number of flies to be tracked per ROI - not implemented yet
         """
-        
+
         positions = []
-        
+
         # Smooth to get rid of false positives
         # http://opencvpython.blogspot.in/2012/06/smoothing-techniques-in-opencv.html
         # https://github.com/abidrahmank/OpenCV2-Python/blob/master/Official_Tutorial_Python_Codes/3_imgproc/smoothing.py
@@ -2101,7 +2101,7 @@ class Monitor(object):
         except:
             # it's our first frame: create the moving average
             self.moving_average = np.float32(frame)
-        
+
         avg = cv2.convertScaleAbs(self.moving_average)
 
         # Minus the current frame from the moving average.
@@ -2142,34 +2142,34 @@ class Monitor(object):
             realROI = self.mask.getROI(fly_number)
             cv2.fillPoly( ROImsk, np.array([realROI]), color=(255, 255, 255) )
             ROIwrk = thresh & ROImsk
-            
+
             (x1,y1), (x2,y2) = ROIrect
 
             contours, hierarchy = cv2.findContours(ROIwrk[y1:y2, x1:x2] ,cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE, offset=(x1,y1))
-            
+
             points = []
             fly_coords = FLY_NOT_DETECTED
-           
+
             for nc, cnt in enumerate(contours[:fliesPerROI]): #limit to only n point per contours
 
                 area = cv2.contourArea(cnt)
                 avg, std, distance, is_outlier = self.fly_area.update(area)
-                
+
                 self.debug_info['FLY_AREA_AVG'] = "%.1f" % avg
                 self.debug_info['FLY_AREA_STD'] = "%.1f" % std
-                
+
                 (x,y),radius = cv2.minEnclosingCircle(cnt)
                 center = (int(x),int(y))
                 radius = int(radius)
-                
+
                 # centroid
                 #moments = cv2.moments(cnt)
                 #if moments['m00'] != 0.0:
                     #cx = moments['m10']/moments['m00']
                     #cy = moments['m01']/moments['m00']
                     #center = (cx,cy)
-                
-                if not is_outlier: 
+
+                if not is_outlier:
                     fly_coords = center
 
                 if self.drawing and is_outlier:
@@ -2179,7 +2179,7 @@ class Monitor(object):
 
             #Store the positions of the flies in an array
             positions.append( (fly_number, fly_coords) )
-        
+
         return draw_frame, positions
 
     def findReferenceCircles(self, frame):
@@ -2191,10 +2191,8 @@ class Monitor(object):
         cframe = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         cframe = cv2.medianBlur(cframe,5)
         circles = cv2.HoughCircles(cframe, cv2.cv.CV_HOUGH_GRADIENT, 1, 10, param1=100, param2=30, minRadius=5, maxRadius=20)
-        
+
         if circles != None:
             circles = np.uint16(np.around(circles))
 
         return circles
-
-        
