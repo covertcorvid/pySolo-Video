@@ -60,11 +60,7 @@ class optionsFrame(wx.Dialog):
         pp = wx.Panel(self, -1)
         self.optpane = wx.Treebook(pp, -1, style= wx.BK_DEFAULT)
 
-        """
-        msg = "Options changed"
-        instructions = wx.StaticText(pp, label=msg)
-        self.msgTxt = wx.TextCtrl(pp, value="")
-        """
+        self.msg = "Options changed"
 
         # Now make a bunch of panels for the list book
         for section in options.getOptionsGroups():
@@ -162,14 +158,13 @@ class optionsFrame(wx.Dialog):
     def onCancelOptions(self, event):
         """
         """
-        self.Close()
+        self.Destroy()
 
     def onSaveOptions(self, event):
         """
         """
         options.Save()
-        msg = self.msgTxt.GetValue()
-        pub.sendMessage("panelListener", message=msg)
+        pub.sendMessage("panelListener", message=self.msg)
         self.Close()
 
 
