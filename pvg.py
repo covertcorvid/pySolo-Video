@@ -26,8 +26,6 @@
 
 import wx, os
 
-from wx.lib.pubsub import pub
-
 from pvg_options import optionsFrame
 
 from pvg_acquire import pvg_AcquirePanel as panelOne
@@ -76,7 +74,6 @@ class mainFrame(wx.Frame):
         wx.Frame.__init__(self, *args, **kwds)
 
         #Register listener to dynamically update configuration
-        pub.subscribe(self.configListener, "panelListener")
         self.SetPosition((0,0))
         self.Maximize()
 
@@ -208,16 +205,13 @@ class mainFrame(wx.Frame):
         """
         """
         frame_opt = optionsFrame(self)
-        frame_opt.Show()
-
-    def configListener(self, message, arg2=None):
-        """Listen for options window close"""
-        print "options closed"
-        # TODO: Update the screen
-        self.videoNotebook.updateUI()
-        # videoNotebook.Layout() Refresh() and Show() don't work
-        # self.Refresh does not work
-        # self.__do_layout does not work
+        #frame_opt.Show()
+        res = frame_opt.ShowModal()
+        frame_opt.Destroy()
+        if res == wx.ID_OK:
+            self.videoNotebook.updateUI()
+        elif res == wx.ID_CANCEL:
+            print "no changes were made"
 
 if __name__ == "__main__":
     app = wx.App()

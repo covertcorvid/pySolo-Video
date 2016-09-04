@@ -23,7 +23,6 @@
 #
 
 import wx, os
-from wx.lib.pubsub import pub
 from pvg_common import options
 import wx.lib.filebrowsebutton as filebrowse
 
@@ -72,11 +71,11 @@ class optionsFrame(wx.Dialog):
             #    self.optpane.AddSubPage(tbPanel, option)
 
         # Add save and cancel buttons to the dialog
-        btSave = wx.Button(pp, wx.ID_SAVE)
+        btSave = wx.Button(pp, wx.ID_OK)
         btCancel = wx.Button(pp, wx.ID_CANCEL)
-        btSave.Bind(wx.EVT_BUTTON, self.onSaveOptions)
-        btCancel.Bind(wx.EVT_BUTTON, self.onCancelOptions)
-        self.Bind(wx.EVT_CLOSE, self.onCancelOptions)
+        #btSave.Bind(wx.EVT_BUTTON, self.onSaveOptions)
+        #btCancel.Bind(wx.EVT_BUTTON, self.onCancelOptions)
+        #self.Bind(wx.EVT_CLOSE, self.onCancelOptions)
 
         # Boxsizers keep things from being on top of each other
         # This boxsizer holds the buttons
@@ -155,15 +154,6 @@ class optionsFrame(wx.Dialog):
     def __saveValue(self, key, event):
         value = event.GetString()
         options.SetOption( key, value )
-
-    def onCancelOptions(self, event):
-        self.Destroy()
-
-    def onSaveOptions(self, event):
-        options.Save()
-        pub.sendMessage("panelListener", message="saved")
-        self.Close()
-
 
 
 class MyApp(wx.App):

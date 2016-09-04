@@ -110,6 +110,7 @@ class pvg_AcquirePanel(wx.Panel):
     def __init__(self, parent):
 
         wx.Panel.__init__(self, parent, wx.ID_ANY)
+        self.frame = parent
 
         self.loadMonitors()
         self.drawPanel()
@@ -122,8 +123,7 @@ class pvg_AcquirePanel(wx.Panel):
         cv2.namedWindow("preview")
 
     def onRefresh(self):
-        self.loadMonitors()
-        self.drawPanel()
+        self.__init__(self.frame)
 
     def drawPanel(self):
         for child in self.GetChildren():
