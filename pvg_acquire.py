@@ -206,7 +206,21 @@ class pvg_AcquirePanel(wx.Panel):
                 self.gridSizer.Layout()
 
     def updateNumCams(self, old):
-        
+        WebcamsList = [ 'Camera %02d' % (int(w) +1) for w in range( self.num_cams ) ]
+        i = 3
+        for mn in range(1, self.mon_num + 1):
+            if not options.HasMonitor(mn):
+                options.SetMonitor(mn) #If monitor does not exist in options we create it
+            md = options.GetMonitor(mn)
+
+            try:
+                _, source = os.path.split( md['source'] )
+            except:
+                source = 'Camera %02d' % ( md['source'] )
+            self.gridSizer.Hide(i)
+            self.gridSizer.Remove(i)
+            self.gridSizer.Insert(i, comboFileBrowser(self, wx.ID_ANY, size=(-1,-1), dialogTitle = "Choose an Input video file", startDirectory = options.GetOption("Data_Folder"), value = source, choices=WebcamsList, fileMask = "Video File (*.*)|*.*", browsevalue="Browse for video...", changeCallback = partial(self.onChangeDropDown, [mn, "source"])), 0, wx.ALL|wx.ALIGN_CENTER, 5 )
+            self.gridSizer.Layout()
 
     def drawPanel(self):
         for child in self.GetChildren():
