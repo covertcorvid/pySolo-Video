@@ -119,27 +119,111 @@ class pvg_AcquirePanel(wx.Panel):
         self.Bind(wx.EVT_TIMER, self.updateTimes, self.timer)
         self.dopreview = False
 
-
         cv2.namedWindow("preview")
 
     def onRefresh(self):
-        self.__init__(self.frame)
+        # Determine what changes must be made
+        old_mons = self.mon_num
+        old_cams = self.num_cams
+        old_data = self.monitorsData
+        self.mon_num = options.GetOption("Monitors")
+        self.num_cams = options.GetOption("Webcams")
+        self.monitorsData = options.getMonitorsData()
+
+        if old_mons != self.mon_num:
+            self.updateMonNum(old_mons)
+        if old_cams != self.num_cams:
+            self.updateNumCams(old_cams)
+        if old_data != self.monitorsData:
+            self.updateData(old_data)
+
+    def updateMonNum(self, old):
+        diff = old - self.mon_num
+        i = diff
+        # Number of items in gridsizer = 9 labels + (9 items per monitor)
+        amnt = (old+1) * 9
+
+        mn = old+1
+        WebcamsList = [ 'Camera %02d' % (int(w) +1) for w in range( self.num_cams ) ]
+        colLabels = ['Status', 'Monitor', 'Source', 'Mask', 'Output', 'Track type', 'Track', 'uptime', 'preview']
+        tracktypes = ['DISTANCE','VBS','XY_COORDS']
+        while i != 0:
+            if diff < 0:
+                # Add monitor
+                i += 1
+                if not options.HasMonitor(mn):
+                    options.SetMonitor(mn)
+                md = options.GetMonitor(mn)
+
+                try:
+                    _, source = os.path.split( md['source'] )
+                except:
+                    source = 'Camera %02d' % ( md['source'] )
+
+                _, mf = os.path.split(md['mask_file'])
+                df = 'Monitor%02d.txt' % (mn)
+
+                #ICON
+                self.status.append( wx.StaticBitmap(self, -1, wx.EmptyBitmap(16,16)) )
+                self.gridSizer.Add(self.status[-1], 0, wx.ALL|wx.ALIGN_CENTER, 5)
+                self.changeIcon(mn)
+
+                #TEXT
+                self.gridSizer.Add(wx.StaticText(self, -1, "Monitor %s" % mn ), 0, wx.ALL|wx.ALIGN_CENTER, 5)
+                self.gridSizer.Add(comboFileBrowser(self, wx.ID_ANY, size=(-1,-1), dialogTitle = "Choose an Input video file", startDirectory = options.GetOption("Data_Folder"), value = source, choices=WebcamsList, fileMask = "Video File (*.*)|*.*", browsevalue="Browse for video...", changeCallback = partial(self.onChangeDropDown, [mn, "source"])), 0, wx.ALL|wx.ALIGN_CENTER, 5 )
+                self.gridSizer.Add(comboFileBrowser(self, wx.ID_ANY, size=(-1,-1), dialogTitle = "Choose a Mask file", startDirectory = options.GetOption("Mask_Folder"), value = mf, fileMask = "pySolo mask file (*.msk)|*.msk", browsevalue="Browse for mask...", changeCallback = partial(self.onChangeDropDown, [mn, "mask_file"])), 0, wx.ALL|wx.ALIGN_CENTER, 5 )
+                self.gridSizer.Add(comboFileBrowser(self, wx.ID_ANY, size=(-1,-1), dialogTitle = "Choose the output file", startDirectory = options.GetOption("Data_Folder"), value = md['outputfile'], fileMask = "Output File (*.txt)|*.txt", browsevalue="Browse for output...", changeCallback = partial(self.onChangeDropDown, [mn, "outputfile"])), 0, wx.ALL|wx.ALIGN_CENTER, 5 )
+
+                #TRACKTYPE
+                ttcb = wx.ComboBox(self, -1, size=(-1,-1), value=md['track_type'], choices=tracktypes, style=wx.CB_DROPDOWN | wx.CB_READONLY | wx.CB_SORT)
+                ttcb.Bind (wx.EVT_COMBOBOX, partial(self.onChangeDropDown, [mn, "track_type"]))
+                self.gridSizer.Add(ttcb , 0, wx.ALL|wx.ALIGN_CENTER, 5)
+
+                #RECORD BUTTON
+                self.recordBTNS.append ( wx.ToggleButton(self, wx.ID_ANY, 'Start') )
+                self.recordBTNS[-1].Bind (wx.EVT_TOGGLEBUTTON, partial( self.onToggleRecording, mn))
+                self.gridSizer.Add(self.recordBTNS[-1], 0, wx.ALL|wx.ALIGN_CENTER, 5)
+
+                #UPTIME
+                self.uptimeTXT.append(wx.TextCtrl(self, value="00:00:00", size=(140,-1)))
+                self.gridSizer.Add(self.uptimeTXT[-1], 0, wx.ALL|wx.ALIGN_CENTER, 5)
+
+                #VIEW BUTTON
+                vb = wx.Button(self, wx.ID_ANY, 'View')
+                vb.Bind(wx.EVT_BUTTON, partial( self.onViewMonitor, mn))
+                self.gridSizer.Add(vb, 0, wx.ALL|wx.ALIGN_CENTER, 5)
+
+                mn += 1
+                self.gridSizer.Layout()
+            elif diff > 0:
+                # Remove monitor - 9 elements in each row
+                for j in range(1, 10):
+                    if self.gridSizer.GetChildren():
+                        self.gridSizer.Hide(amnt-j)
+                        self.gridSizer.Remove(amnt-j)
+                amnt -= 9
+                i -= 1
+                self.gridSizer.Layout()
+
+    def updateNumCams(self, old):
+        
 
     def drawPanel(self):
         for child in self.GetChildren():
             child.Destroy()
 
-        mon_num = options.GetOption("Monitors")
-        num_cams = options.GetOption("Webcams")
+        self.mon_num = options.GetOption("Monitors")
+        self.num_cams = options.GetOption("Webcams")
         monitorsData = options.getMonitorsData()
+        self.monitorsData = monitorsData
 
-        WebcamsList = [ 'Camera %02d' % (int(w) +1) for w in range( num_cams ) ]
+        WebcamsList = [ 'Camera %02d' % (int(w) +1) for w in range( self.num_cams ) ]
         colLabels = ['Status', 'Monitor', 'Source', 'Mask', 'Output', 'Track type', 'Track', 'uptime', 'preview']
         tracktypes = ['DISTANCE','VBS','XY_COORDS']
 
         # create layouts and their items
         mainSizer = wx.BoxSizer(wx.VERTICAL)
-        gridSizer = self.drawMonitorGrid(mon_num, colLabels, WebcamsList, tracktypes)
+        gridSizer = self.drawMonitorGrid(self.mon_num, colLabels, WebcamsList, tracktypes)
         btnSizer = self.drawButtons()
 
         # Add monitor grid and buttons to main layout
@@ -147,6 +231,9 @@ class pvg_AcquirePanel(wx.Panel):
         mainSizer.Add(gridSizer, 1, wx.EXPAND, 0)
         mainSizer.Add(btnSizer, 0, wx.ALL, 5)
         mainSizer.Layout()
+
+        self.gridSizer = gridSizer
+        self.mainSizer = mainSizer
         self.SetSizer(mainSizer)
         self.Refresh()
 
@@ -234,9 +321,6 @@ class pvg_AcquirePanel(wx.Panel):
         return btnSizer
 
     def changeIcon(self, monitor):
-        """
-        """
-
         if monitor in self.active_monitors and self.active_monitors[monitor].hasSource():
             bmp = wx.ArtProvider.GetBitmap(wx.ART_TICK_MARK, wx.ART_MESSAGE_BOX, (16,16))
         else:
@@ -245,8 +329,6 @@ class pvg_AcquirePanel(wx.Panel):
         self.status[monitor-1].SetBitmap(bmp)
 
     def onChangeCheckBox(self, target, event=None):
-        """
-        """
         self.saveOptionsBtn.Enable(True)
         self.startBtn.Enable(False)
 
@@ -256,8 +338,6 @@ class pvg_AcquirePanel(wx.Panel):
         options.setValue(section, keyname, value)
 
     def onChangeDropDown(self, target, event=None):
-        """
-        """
         self.saveOptionsBtn.Enable(True)
         self.startBtn.Enable(False)
 
@@ -269,13 +349,9 @@ class pvg_AcquirePanel(wx.Panel):
         keyname = target[1]
         options.setValue(section, keyname, value)
 
-
     def onChangeValue(self, target, event=None):
-        """
-        """
         self.saveOptionsBtn.Enable(True)
         self.startBtn.Enable(False)
-
 
         if event.GetEventType() == wx.EVT_CHECKBOX.evtType:
             value = event.IsChecked()
@@ -286,16 +362,11 @@ class pvg_AcquirePanel(wx.Panel):
             if "Camera " in value:
                 value = int(value.split(" ")[1])
 
-
         section = "Monitor%s" % target[0]
         keyname = target[1]
         options.setValue(section, keyname, value)
 
-
     def loadMonitors(self):
-        """
-        """
-
         self.active_monitors = {}
         resolution = options.GetOption("Resolution")
         data_folder = options.GetOption("Data_Folder")
@@ -326,10 +397,7 @@ class pvg_AcquirePanel(wx.Panel):
 
         pysolovideo.MONITORS = self.active_monitors
 
-
     def onStartAll(self, event=None):
-        """
-        """
         self.stopBtn.Enable(True)
         self.startBtn.Enable(False)
 
@@ -339,9 +407,6 @@ class pvg_AcquirePanel(wx.Panel):
                 self.onToggleRecording(num+1, force="start")
 
     def onStopAll(self, event):
-        """
-        """
-
         self.stopBtn.Enable(False)
         self.startBtn.Enable(True)
 
@@ -349,18 +414,13 @@ class pvg_AcquirePanel(wx.Panel):
             recording = btn.GetValue()
             if recording: self.onToggleRecording(num+1, force="stop")
 
-
     def onSave(self, event):
-        """
-        """
         options.Save()
         self.drawPanel()
         self.saveOptionsBtn.Enable(False)
         self.startBtn.Enable(True)
 
     def onToggleRecording(self, monitor, event=None, force=None):
-        """
-        """
         if monitor in self.active_monitors:
             recording = self.recordBTNS[monitor-1].GetValue()
 
@@ -386,24 +446,19 @@ class pvg_AcquirePanel(wx.Panel):
         """
         Show monitor image on preview window
         """
-
         #while self.dopreview:
         if self.dopreview:
             frame = self.active_monitors[self.dopreview].getImageFromQueue()
             if frame is not None:
                 cv2.imshow("preview", frame)
 
-
     def updateTimes(self, event):
-        """
-        """
         for n in range (len(self.active_monitors)):
             if self.active_monitors[n+1].isTracking:
                 t, r = self.active_monitors[n+1].getUptime()
                 self.uptimeTXT[n].SetValue("%s (%s)" % (t, r))
 
         self.displayImage()
-
 
 class acquireFrame(wx.Frame):
     def __init__(self, *args, **kwargs):

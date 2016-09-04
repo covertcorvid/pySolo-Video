@@ -43,6 +43,8 @@ class thumbnailPanel(previewPanel):
 
         self.Bind(wx.EVT_LEFT_UP, self.onLeftClick)
 
+    def setThumbnailSize(self, sz):
+        self.SetSize(sz)
 
     def displayNumber(self):
         """
@@ -69,8 +71,6 @@ class thumbnailPanel(previewPanel):
 
         self.GetEventHandler().ProcessEvent(event)
 
-
-
 class panelGridView(wx.ScrolledWindow):
     """
     """
@@ -83,22 +83,45 @@ class panelGridView(wx.ScrolledWindow):
         self.parent = parent
         self.thumbnailSize = thumbnailSize
 
-        grid_mainSizer = wx.GridSizer(6,3,2,2)
+        self.grid_mainSizer = wx.GridSizer(6,3,2,2)
+        self.gridSize = gridSize
 
         #Populate the thumbnail grid
         self.previewPanels = []
         for i in range (int(gridSize)):
             self.previewPanels.append ( thumbnailPanel(self, monitor_number=i, thumbnailSize=self.thumbnailSize) )
-            grid_mainSizer.Add(self.previewPanels[i])#, 0, wx.EXPAND|wx.FIXED_MINSIZE, 0)
+            self.grid_mainSizer.Add(self.previewPanels[i])#, 0, wx.EXPAND|wx.FIXED_MINSIZE, 0)
 
-        self.SetSizer(grid_mainSizer)
+        self.SetSizer(self.grid_mainSizer)
 
         self.Bind(EVT_THUMBNAIL_CLICKED, self.onThumbnailClicked)
 
-    def onRefresh(self, gridSize, thumbnailSize=(320,240)):
-        self.previewPanels = []
-        for i in range(int(gridSize)):
-            self.previewPanels.append(thumbnailPanel(self, monitor_number=i, thumbnailSize=self.thumbnailSize))
+    def updateMonitors(self, old, now):
+        diff = old - now
+        self.gridSize = now
+        i = diff
+        j = 0
+        while i != 0:
+            if diff < 0:
+                # Adding monitors to grid
+                i += 1
+                self.previewPanels.append ( thumbnailPanel(self, monitor_numer=old+j, thumbnailSize = self.thumbnailSize) )
+                self.grid_mainSizer.Add(self.previewPanels[old+j])
+                self.grid_mainSizer.Layout()
+                j += 1
+            elif diff > 0:
+                # Removing monitors from grid
+                i -= 1
+                self.grid_mainSizer.Hide(old-1)
+                self.grid_mainSizer.Remove(old-1)
+                old -= 1
+                self.grid_mainSizer.Layout()
+
+    def updateThumbs(self, old, new):
+        self.thumbnailSize = new
+        for i in range(0, self.gridSize):
+            self.previewPanels[i].SetThumbnailsize(new)
+            self.grid_mainSizer.Layout()
 
     def onThumbnailClicked(self, event):
         """
@@ -106,7 +129,6 @@ class panelGridView(wx.ScrolledWindow):
         """
         wx.PostEvent(self.parent.lowerPanel, event)
         event.Skip()
-
 
 class panelConfigure(wx.Panel):
     """
@@ -420,7 +442,9 @@ class panelOne(wx.Panel):
         wx.Panel.__init__(self, parent)
 
         monitor_number = options.GetOption("Monitors")
+        self.mon_num = monitor_number
         tn_size = options.GetOption("ThumbnailSize")
+        self.thumb_size = tn_size
 
         self.temp_source  = ''
         self.source = ''
@@ -434,7 +458,6 @@ class panelOne(wx.Panel):
         self.PanelOneSizer.Add(self.lowerPanel, 0, wx.EXPAND, 0)
         self.SetSizer(self.PanelOneSizer)
 
-
     def StopPlaying(self):
         """
         """
@@ -442,7 +465,10 @@ class panelOne(wx.Panel):
 
     def onRefresh(self):
         monitor_number = options.GetOption("Monitors")
+        if self.mon_num != monitor_number:
+            self.scrollThumbnails.updateMonitors(self.mon_num, monitor_number)
         tn_size = options.GetOption("ThumbnailSize")
-
-        self.scrollThumbnails.onRefresh(self, gridSize=monitor_number, thumbnailSize=tn_size)
-        #self.lowerPanel.onRefresh(self)
+        if self.thumb_size != tn_size:
+            self.scrollThumbnails.updateThumbs(self.thumb_size, tn_size)
+        self.PanelOneSizer.Layout()
+        self.Layout()
