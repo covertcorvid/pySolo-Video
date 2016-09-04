@@ -104,8 +104,6 @@ class comboFileBrowser(wx.ComboBox):
         #event.SetValue(filename)
         self.changeCallback(event=event)
 
-
-
 class pvg_AcquirePanel(wx.Panel):
     def __init__(self, parent):
 
@@ -125,17 +123,13 @@ class pvg_AcquirePanel(wx.Panel):
         # Determine what changes must be made
         old_mons = self.mon_num
         old_cams = self.num_cams
-        old_data = self.monitorsData
         self.mon_num = options.GetOption("Monitors")
         self.num_cams = options.GetOption("Webcams")
-        self.monitorsData = options.getMonitorsData()
 
         if old_mons != self.mon_num:
             self.updateMonNum(old_mons)
         if old_cams != self.num_cams:
             self.updateNumCams(old_cams)
-        if old_data != self.monitorsData:
-            self.updateData(old_data)
 
     def updateMonNum(self, old):
         diff = old - self.mon_num
@@ -485,8 +479,6 @@ class acquireFrame(wx.Frame):
         self.SetStatusBar(self.sb)
 
         self.acq_panel =  pvg_AcquirePanel(self)
-
-
 
 if __name__ == '__main__':
 
