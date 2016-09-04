@@ -153,7 +153,7 @@ class mainFrame(wx.Frame):
 
         dlg = wx.MessageDialog(self, about, 'About', wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
-        dlg.Destroy()
+        dlg.Close()
 
 
     def onFileSave(self, event):
@@ -178,7 +178,7 @@ class mainFrame(wx.Frame):
             path = dlg.GetPath()
             options.Save(filename=path)
 
-        dlg.Destroy()
+        dlg.Close()
 
     def onFileOpen(self, event):
         """
@@ -197,7 +197,7 @@ class mainFrame(wx.Frame):
             path = dlg.GetPath()
             options.New(path)
 
-        dlg.Destroy()
+        dlg.Close()
 
     def onFileExit(self, event):
         """
@@ -207,7 +207,7 @@ class mainFrame(wx.Frame):
     def onConfigure(self, event):
         """
         """
-        frame_opt = optionsFrame(self, -1, '')
+        frame_opt = optionsFrame(self)
         frame_opt.Show()
 
     def configListener(self, message, arg2=None):

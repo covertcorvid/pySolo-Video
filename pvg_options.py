@@ -48,20 +48,23 @@ class partial: #AKA curry
 
         return self.fun(*(self.pending + args), **kw)
 
-class optionsFrame(wx.Frame):
-    def __init__(self, parent, ID=-1, title='pySolo Video Options', pos=wx.DefaultPosition,
-        size=(640,480), style=wx.DEFAULT_FRAME_STYLE
-            ):
+#class optionsFrame(wx.Frame):
+class optionsFrame(wx.Dialog):
+    def __init__(self, parent):
 
-        wx.Frame.__init__(self, parent, ID, title, pos, size, style)
+        super(optionsFrame, self).__init__(parent, -1, 'pySolo Video Options',
+        pos=wx.DefaultPosition,  size=(640,480), style=wx.DEFAULT_FRAME_STYLE | wx.OK | wx.CANCEL)
+        #wx.Frame.__init__(self, parent, ID, title, pos, size, style)
 
 
         pp = wx.Panel(self, -1)
         self.optpane = wx.Treebook(pp, -1, style= wx.BK_DEFAULT)
 
+        """
         msg = "Options changed"
         instructions = wx.StaticText(pp, label=msg)
         self.msgTxt = wx.TextCtrl(pp, value="")
+        """
 
         # Now make a bunch of panels for the list book
         for section in options.getOptionsGroups():
@@ -73,7 +76,6 @@ class optionsFrame(wx.Frame):
             #    # All the following ones are children
             #    tbPanel = self.makePanel(self.optpane, option)
             #    self.optpane.AddSubPage(tbPanel, option)
-
 
         btSave = wx.Button(pp, wx.ID_SAVE)
         btCancel = wx.Button(pp, wx.ID_CANCEL)
@@ -96,8 +98,8 @@ class optionsFrame(wx.Frame):
         wx.FutureCall(100, self.__adjustSize)
 
 
-        for i in range(0,len(self.optpane.Children)-1):
-            self.optpane.ExpandNode(i)
+        #for i in range(0,len(self.optpane.Children)-1):
+        #    self.optpane.ExpandNode(i)
 
     def __adjustSize(self):
         '''
@@ -160,7 +162,7 @@ class optionsFrame(wx.Frame):
     def onCancelOptions(self, event):
         """
         """
-        self.Destroy()
+        self.Close()
 
     def onSaveOptions(self, event):
         """
