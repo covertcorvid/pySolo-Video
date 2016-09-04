@@ -56,10 +56,8 @@ class mainNotebook(wx.Notebook):
         self.Layout()
 
     def updateUI(self):
-        self.panelOne.onDestroy()
-        self.panelTwo.onDestroy()
-        self.panelOne = panelOne(self)
-        self.panelTwo = panelLiveView(self)
+        self.panelOne.onRefresh()
+        self.panelTwo.onRefresh()
         self.Layout()
 
     def OnPageChanging(self, event):
@@ -79,6 +77,8 @@ class mainFrame(wx.Frame):
 
         #Register listener to dynamically update configuration
         pub.subscribe(self.configListener, "panelListener")
+        self.SetPosition((0,0))
+        self.Maximize()
 
         self.__menubar__()
         self.__set_properties()
@@ -220,8 +220,7 @@ class mainFrame(wx.Frame):
         # self.__do_layout does not work
 
 if __name__ == "__main__":
-
-    app = wx.App(False)
+    app = wx.App()
     frame_1 = mainFrame(None, -1, "")
     app.SetTopWindow(frame_1)
     frame_1.Show()

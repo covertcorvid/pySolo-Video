@@ -440,7 +440,7 @@ class panelOne(wx.Panel):
         """
         self.lowerPanel.onStop()
 
-    def onDestroy(self):
+    def onRefresh(self):
         monitor_number = options.GetOption("Monitors")
         tn_size = options.GetOption("ThumbnailSize")
 

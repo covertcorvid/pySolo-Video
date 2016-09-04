@@ -121,15 +121,11 @@ class pvg_AcquirePanel(wx.Panel):
 
         cv2.namedWindow("preview")
 
-    def onDestroy(self):
+    def onRefresh(self):
         self.loadMonitors()
         self.drawPanel()
 
     def drawPanel(self):
-        """
-        """
-        ###################################################
-
         for child in self.GetChildren():
             child.Destroy()
 
@@ -141,7 +137,20 @@ class pvg_AcquirePanel(wx.Panel):
         colLabels = ['Status', 'Monitor', 'Source', 'Mask', 'Output', 'Track type', 'Track', 'uptime', 'preview']
         tracktypes = ['DISTANCE','VBS','XY_COORDS']
 
+        # create layouts and their items
         mainSizer = wx.BoxSizer(wx.VERTICAL)
+        gridSizer = self.drawMonitorGrid(mon_num, colLabels, WebcamsList, tracktypes)
+        btnSizer = self.drawButtons()
+
+        # Add monitor grid and buttons to main layout
+        #mainSizer.Add(self.FBconfig, 0, wx.EXPAND|wx.ALL, 5)
+        mainSizer.Add(gridSizer, 1, wx.EXPAND, 0)
+        mainSizer.Add(btnSizer, 0, wx.ALL, 5)
+        mainSizer.Layout()
+        self.SetSizer(mainSizer)
+        self.Refresh()
+
+    def drawMonitorGrid(self, mon_num, colLabels, WebcamsList, tracktypes):
         gridSizer = wx.FlexGridSizer (cols=len(colLabels), vgap=5, hgap=5)  #wx.BoxSizer(wx.VERTICAL)
 
         #FIRST ROW
@@ -156,10 +165,8 @@ class pvg_AcquirePanel(wx.Panel):
 
         #LOOP THROUGH
         for mn in range(1, mon_num+1):
-
             if not options.HasMonitor(mn):
                 options.SetMonitor(mn) #If monitor does not exist in options we create it
-
             md = options.GetMonitor(mn)
 
             try:
@@ -177,14 +184,8 @@ class pvg_AcquirePanel(wx.Panel):
 
             #TEXT
             gridSizer.Add(wx.StaticText(self, -1, "Monitor %s" % mn ), 0, wx.ALL|wx.ALIGN_CENTER, 5)
-
-            #INPUT SOURCE
             gridSizer.Add(comboFileBrowser(self, wx.ID_ANY, size=(-1,-1), dialogTitle = "Choose an Input video file", startDirectory = options.GetOption("Data_Folder"), value = source, choices=WebcamsList, fileMask = "Video File (*.*)|*.*", browsevalue="Browse for video...", changeCallback = partial(self.onChangeDropDown, [mn, "source"])), 0, wx.ALL|wx.ALIGN_CENTER, 5 )
-
-            #MASK FILE
             gridSizer.Add(comboFileBrowser(self, wx.ID_ANY, size=(-1,-1), dialogTitle = "Choose a Mask file", startDirectory = options.GetOption("Mask_Folder"), value = mf, fileMask = "pySolo mask file (*.msk)|*.msk", browsevalue="Browse for mask...", changeCallback = partial(self.onChangeDropDown, [mn, "mask_file"])), 0, wx.ALL|wx.ALIGN_CENTER, 5 )
-
-            #OUTPUT FILE
             gridSizer.Add(comboFileBrowser(self, wx.ID_ANY, size=(-1,-1), dialogTitle = "Choose the output file", startDirectory = options.GetOption("Data_Folder"), value = md['outputfile'], fileMask = "Output File (*.txt)|*.txt", browsevalue="Browse for output...", changeCallback = partial(self.onChangeDropDown, [mn, "outputfile"])), 0, wx.ALL|wx.ALIGN_CENTER, 5 )
 
             #TRACKTYPE
@@ -206,6 +207,9 @@ class pvg_AcquirePanel(wx.Panel):
             vb.Bind(wx.EVT_BUTTON, partial( self.onViewMonitor, mn))
             gridSizer.Add(vb, 0, wx.ALL|wx.ALIGN_CENTER, 5)
 
+        return gridSizer
+
+    def drawButtons(self):
         btnSizer = wx.BoxSizer(wx.HORIZONTAL)
         conf_btnSizer = wx.StaticBoxSizer(wx.StaticBox(self, wx.ID_ANY, 'Configuration'), wx.HORIZONTAL)
         acq_btnSizer = wx.StaticBoxSizer(wx.StaticBox(self, wx.ID_ANY, 'Acquisition'), wx.HORIZONTAL)
@@ -227,12 +231,7 @@ class pvg_AcquirePanel(wx.Panel):
         btnSizer.Add(conf_btnSizer, 0, wx.ALL, 5)
         btnSizer.Add(acq_btnSizer, 0, wx.ALL, 5)
 
-        #mainSizer.Add(self.FBconfig, 0, wx.EXPAND|wx.ALL, 5)
-        mainSizer.Add(gridSizer, 1, wx.EXPAND, 0)
-        mainSizer.Add(btnSizer, 0, wx.ALL, 5)
-        mainSizer.Layout()
-        self.SetSizer(mainSizer)
-        self.Refresh()
+        return btnSizer
 
     def changeIcon(self, monitor):
         """

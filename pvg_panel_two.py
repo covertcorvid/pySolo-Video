@@ -236,5 +236,5 @@ class panelLiveView(wx.Panel):
 
         dlg.Destroy()
 
-    def onDestroy(self):
+    def onRefresh(self):
         self.Destroy()
