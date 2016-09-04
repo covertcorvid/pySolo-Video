@@ -221,6 +221,7 @@ class pvg_AcquirePanel(wx.Panel):
             self.gridSizer.Remove(i)
             self.gridSizer.Insert(i, comboFileBrowser(self, wx.ID_ANY, size=(-1,-1), dialogTitle = "Choose an Input video file", startDirectory = options.GetOption("Data_Folder"), value = source, choices=WebcamsList, fileMask = "Video File (*.*)|*.*", browsevalue="Browse for video...", changeCallback = partial(self.onChangeDropDown, [mn, "source"])), 0, wx.ALL|wx.ALIGN_CENTER, 5 )
             self.gridSizer.Layout()
+            i += 9
 
     def drawPanel(self):
         for child in self.GetChildren():
