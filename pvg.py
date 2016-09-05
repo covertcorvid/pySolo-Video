@@ -248,6 +248,13 @@ class mainNotebook(wx.Notebook):
 
         self.Layout()
 
+# %%    Updates window after change of configuration
+        
+    def updateUI(self):
+        self.panelOne.onRefresh()
+        self.panelTwo.onRefresh()
+        self.Layout()
+        
 # %%
 
     def OnPageChanging(self, event):
@@ -268,3 +275,5 @@ if __name__ == "__main__":
     frame_1.Show()
     app.SetTopWindow(frame_1)
     app.MainLoop()                        # begin interaction with user
+
+
