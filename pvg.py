@@ -193,24 +193,20 @@ class mainFrame(wx.Frame):
         dlg.Destroy()
 
     def onFileExit(self, event):
-        """
-        """
         self.Close()
 
     def onConfigure(self, event):
-        """
-        """
-        frame_opt = optionsFrame(self)
-        #frame_opt.Show()
-        res = frame_opt.ShowModal()
-        frame_opt.Destroy()
-        if res == wx.ID_OK:
+        """Opens the configure dialog.
+           Implements any options changes."""
+        frame_opt = optionsFrame(self) # Creates the dialog frame_opt using pvg_options
+        res = frame_opt.ShowModal() # Find out whether OK or Cancel was clicked
+        frame_opt.Destroy() # Get rid of the dialog
+        if res == wx.ID_OK: # If the user clicked OK, implement any changes
             self.videoNotebook.updateUI()
-        elif res == wx.ID_CANCEL:
+        elif res == wx.ID_CANCEL: # Otherwise, do nothing
             print "no changes were made"
 
 if __name__ == "__main__":
-
     app = wx.App()
     frame_1 = mainFrame(None, -1, "")
     app.SetTopWindow(frame_1)
