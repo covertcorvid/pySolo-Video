@@ -53,16 +53,16 @@ class panelLiveView(wx.Panel):
         sizer_mask = wx.BoxSizer(wx.VERTICAL)       # mask parameters
 
 # %%
-        # Column 1: Monitor Display
-        sb_1 = wx.StaticBox(self, -1, "Select Monitor",
-                            pos=(x*0.02, y*0.02), size=(x*0.3, y*0.8))
-        sbSizer_1 = wx.StaticBoxSizer(sb_1, wx.VERTICAL)    # orientation
+# Column 1: Monitor Display
+        select_monitor = wx.StaticBox(self, -1, "Select Monitor")
+        # ,
+        #                    pos=(x*0.02, y*0.02), size=(x*0.3, y*0.8))
 
-#   monitor selection menu
+# Column 2:  monitor selection menu
         self.MonitorList = ['Monitor %s' % (int(m) + 1)
                             for m in range(options.GetOption("Monitors"))]
         self.thumbnailNumber = wx.ComboBox(self, -1,
-                                           pos=(x*0.45, y*0.03),
+#                                           pos=(x*0.45, y*0.03),
                                            choices=self.MonitorList,
                                            style=wx.CB_DROPDOWN |
                                                  wx.CB_READONLY |
