@@ -25,7 +25,7 @@ import wx, os
 import numpy as np
 import cv2
 from pvg_common import previewPanel, options
-import pysolovideo
+#import pysolovideo
 
 # %%
 
@@ -54,13 +54,15 @@ class panelLiveView(wx.Panel):
 
 # %%
 # Column 1: Monitor Display
-        select_monitor = wx.StaticBox(self, -1, "Select Monitor")
+
+# Column 2:
+#   monitor selection menu staticbox
+        self.select_monitor = wx.StaticBox(self, -1, "Select Monitor")   # title
         # ,
         #                    pos=(x*0.02, y*0.02), size=(x*0.3, y*0.8))
-
-# Column 2:  monitor selection menu
         self.MonitorList = ['Monitor %s' % (int(m) + 1)
                             for m in range(options.GetOption("Monitors"))]
+#   thumbnail combobox
         self.thumbnailNumber = wx.ComboBox(self, -1,
 #                                           pos=(x*0.45, y*0.03),
                                            choices=self.MonitorList,
@@ -71,59 +73,47 @@ class panelLiveView(wx.Panel):
 
 #   text box for data entry
         self.sourceTXTBOX = wx.TextCtrl(self, -1,
-                                        pos=(x*0.45, y*0.13),
+#                                        pos=(x*0.45, y*0.13),
                                         name="No monitor selected",
                                         style=wx.TE_READONLY)
 
-        sbSizer_1.Add(self.thumbnailNumber, 0, wx.ALIGN_CENTRE |
+#   apply the boxes to the sizer
+        sizer_monitor.Add(self.select_monitor, 0, wx.ALIGN_CENTRE |
                                                wx.LEFT |
                                                wx.RIGHT |
                                                wx.TOP, 5)
-        sbSizer_1.Add(self.sourceTXTBOX, 0, wx.ALIGN_CENTRE |
+        sizer_monitor.Add(self.thumbnailNumber, 0, wx.ALIGN_CENTRE |
                                                wx.LEFT |
                                                wx.RIGHT |
                                                wx.TOP, 5)
-# %%         Play video in Static Box 1
-#
-#
-#        print('Playing Video')
-#        cap = cv2.VideoCapture('c:\Users\Lori\Documents\GitHub\fly_movie.avi')
-#
-#        while(cap.isOpened()):
-#            ret, frame = cap.read()
-#
-#            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-#
-#            cv2.imshow('frame',gray)
-#            if cv2.waitKey(1) & 0xFF == ord('q'):
-#                break
-#
-#        cap.release()
-#        cv2.destroyAllWindows()
-#
+        sizer_monitor.Add(self.sourceTXTBOX, 0, wx.ALIGN_CENTRE |
+                                               wx.LEFT |
+                                               wx.RIGHT |
+                                               wx.TOP, 5)
 
-# %%
-#        # Static box2: Mask Parameters
-        sb_2 = wx.StaticBox(self, -1, "Mask Editing",
-                            pos=(x*0.6, y*0.02), size=(x*0.3, y*0.3))
-#        sbSizer_2 = wx.StaticBoxSizer(sb_2, wx.VERTICAL)
-        fgSizer_1 = wx.FlexGridSizer(4, 0, 10, 10)
-
-        self.btnClear = wx.Button(self, wx.ID_ANY, label="Clear All")
-        self.Bind(wx.EVT_BUTTON, self.fsPanel.ClearAll, self.btnClear)
-
-        self.btnClearLast = wx.Button(self, wx.ID_ANY, label="Clear selected")
-        self.Bind(wx.EVT_BUTTON, self.fsPanel.ClearLast, self.btnClearLast)
-
-        self.AFValue = wx.TextCtrl(self, -1, "32")
-        self.btnAutoFill = wx.Button(self, wx.ID_ANY, label="Auto Fill")
-        self.Bind(wx.EVT_BUTTON, self.onAutoMask, self.btnAutoFill)
-        # self.btnAutoFill.Enable(False)
-
-        fgSizer_1.Add(self.btnClear)
-        fgSizer_1.Add(self.btnClearLast)
-        fgSizer_1.Add(self.AFValue)
-        fgSizer_1.Add(self.btnAutoFill)
+## %%
+##        Mask Parameters
+#        mask_editing = wx.StaticBox(self, -1, "Mask Editing")
+## ,
+##                            pos=(x*0.6, y*0.02), size=(x*0.3, y*0.3))
+##        sbSizer_2 = wx.StaticBoxSizer(sb_2, wx.VERTICAL)
+#        fgSizer_1 = wx.FlexGridSizer(4, 0, 10, 10)
+#
+#        self.btnClear = wx.Button(self, wx.ID_ANY, label="Clear All")
+#        self.Bind(wx.EVT_BUTTON, self.fsPanel.ClearAll, self.btnClear)
+#
+#        self.btnClearLast = wx.Button(self, wx.ID_ANY, label="Clear selected")
+#        self.Bind(wx.EVT_BUTTON, self.fsPanel.ClearLast, self.btnClearLast)
+#
+#        self.AFValue = wx.TextCtrl(self, -1, "32")
+#        self.btnAutoFill = wx.Button(self, wx.ID_ANY, label="Auto Fill")
+#        self.Bind(wx.EVT_BUTTON, self.onAutoMask, self.btnAutoFill)
+#        # self.btnAutoFill.Enable(False)
+#
+#        fgSizer_1.Add(self.btnClear)
+#        fgSizer_1.Add(self.btnClearLast)
+#        fgSizer_1.Add(self.AFValue)
+#        fgSizer_1.Add(self.btnAutoFill)
 #
 #        sbSizer_2.Add(fgSizer_1)
 

@@ -12,7 +12,7 @@ import cv2
 #import pysolovideo
 
  #%%   print('Playing Video')
-cap = cv2.VideoCapture('c:\Users\Lori\Documents\GitHub\fly_movie.avi')
+cap = cv2.VideoCapture('fly_movie.avi')
 
 print('cap is set')
 while True:
