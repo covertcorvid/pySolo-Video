@@ -211,7 +211,7 @@ class mainFrame(wx.Frame):
 
 if __name__ == "__main__":
 
-    app = wx.App(False)
+    app = wx.App()
     frame_1 = mainFrame(None, -1, "")
     app.SetTopWindow(frame_1)
     frame_1.Show()
