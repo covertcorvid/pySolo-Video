@@ -276,3 +276,5 @@ if __name__ == "__main__":
     frame_1.Show()
     app.SetTopWindow(frame_1)
     app.MainLoop()                        # begin interaction with user
+    print('done')
+    
