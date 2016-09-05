@@ -45,9 +45,9 @@ class panelLiveView(wx.Panel):
         self.panel = wx.Panel.__init__(self, parent)
 
 #        self.monitor_name = ''
-#        self.fsPanel = previewPanel(self,
-#                                    size=options.GetOption("Resolution"),
-#                                    showtime=True)
+        self.fsPanel = previewPanel(self,
+                                    size=options.GetOption("Resolution"),
+                                    showtime=True)
 
 #        sizer_1 = wx.BoxSizer(wx.VERTICAL)
 #        sizer_2 = wx.BoxSizer(wx.HORIZONTAL)
@@ -59,30 +59,36 @@ class panelLiveView(wx.Panel):
 # %% Static Box 1:  Monitor input
         self.title_1 = wx.StaticText(self, wx.ID_ANY, 'Select Monitor')
     #create select monitor combobox
-        self.MonitorList = ['Monitor %s' % (int(m) + 1) 
+        self.MonitorList = ['Monitor %s' % (int(m) + 1)
                             for m in range(options.GetOption("Monitors"))]
-        self.thumbnailNumber = wx.ComboBox(self, -1, size=(-1,-1), 
-                                           choices=self.MonitorList, 
+        self.thumbnailNumber = wx.ComboBox(self, -1, size=(-1,-1),
+                                           choices=self.MonitorList,
                                            style=wx.CB_DROPDOWN
                                            | wx.CB_READONLY
                                            | wx.CB_SORT)
         self.Bind(wx.EVT_COMBOBOX, self.onChangeMonitor, self.thumbnailNumber)
- 
+
         sizer_1a = wx.BoxSizer(wx.HORIZONTAL)
-        
+
         sizer_1a.Add(self.title_1, 0, wx.ALL, 5)
         sizer_1a.Add(self.thumbnailNumber, 0, wx.ALL, 5)
 
-        
+
 # INSERT VIDEO HERE
-        self.movie = wx.ArtProvider.GetBitmap(wx.ART_TIP, wx.ART_OTHER, (16, 16))
-        self.inputOneIco = wx.StaticBitmap(self, wx.ID_ANY, self.movie)        
+#        self.movie = wx.ArtProvider.GetBitmap(wx.ART_TIP, wx.ART_OTHER, (16, 16))
+        videoWarper = wx.StaticBox(self, size=(640,480))
+        videoBoxSizer = wx.StaticBoxSizer(videoWarper, wx.VERTICAL)
+        videoFrame = wx.Panel(self, -1, size=(640,480))
+        cap = cv2.VideoCapture('fly_movie.avi')
+        showCap = ShowCapture(videoFrame, cap)
+        videoBoxSizer.Add(videoFrame, 0)
+#        self.inputOneIco = wx.StaticBitmap(self, wx.ID_ANY, self.movie)
 
 
         sizer_1 = wx.BoxSizer(wx.VERTICAL)
         sizer_1.Add(sizer_1a, 0, wx.ALL, 20)
-        sizer_1.Add(self.inputOneIco, 0, wx.ALL, 20)
- 
+        sizer_1.Add(videoBoxSizer, 0, wx.ALL, 20)
+
         self.SetSizer(sizer_1)
 
 ## Column 2:
@@ -257,10 +263,10 @@ class panelLiveView(wx.Panel):
 #
 ## %%
 #
-#    def StopPlaying(self):
-#        """
-#        """
-#        if self.fsPanel and self.fsPanel.isPlaying: self.fsPanel.Stop()
+    def StopPlaying(self):
+        """
+        """
+        if self.fsPanel and self.fsPanel.isPlaying: self.fsPanel.Stop()
 #
 #
 # %%
@@ -363,3 +369,35 @@ class panelLiveView(wx.Panel):
 #
 #x, y = options.GetOption("Resolution")    # screen resolution global variables.
 #
+class ShowCapture(wx.Panel):
+
+    def __init__(self, parent, capture, fps=24):
+        wx.Panel.__init__(self, parent, wx.ID_ANY, (0,0), (640,480))
+
+        self.capture = capture
+        ret, frame = self.capture.read()
+
+        height, width = frame.shape[:2]
+
+        parent.SetSize((width, height))
+
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        self.bmp = wx.BitmapFromBuffer(width, height, frame)
+
+        self.timer = wx.Timer(self)
+        self.timer.Start(1000./fps)
+
+        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Bind(wx.EVT_TIMER, self.NextFrame)
+
+    def OnPaint(self, evt):
+        dc = wx.BufferedPaintDC(self)
+        dc.DrawBitmap(self.bmp, 0, 0)
+
+    def NextFrame(self, event):
+        ret, frame = self.capture.read()
+        if ret:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            self.bmp.CopyFromBuffer(frame)
+            self.Refresh()
