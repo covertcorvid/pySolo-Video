@@ -170,7 +170,7 @@ class pvg_AcquirePanel(wx.Panel): # The display of the monitor list and recordin
         Updates the camera combofilebrowser when the number of cameras changes
         """
         WebcamsList = [ 'Camera %02d' % (int(w) +1) for w in range( self.num_cams ) ]
-        i = 3 # The combofilebrowser is the 3rd item in each row
+        i = 11 # Skip the labels, start with first monitor
         for mn in range(1, self.mon_num + 1): # For each monitor
             if not options.HasMonitor(mn):
                 options.SetMonitor(mn) #If monitor does not exist in options we create it
