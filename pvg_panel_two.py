@@ -58,26 +58,39 @@ class panelLiveView(wx.Panel):
 # sizer_1: Monitor Display
 # %% Static Box 1:  Monitor input
         self.title_1 = wx.StaticText(self, wx.ID_ANY, 'Select Monitor')
+    #create select monitor combobox
+        self.MonitorList = ['Monitor %s' % (int(m) + 1) 
+                            for m in range(options.GetOption("Monitors"))]
+        self.thumbnailNumber = wx.ComboBox(self, -1, size=(-1,-1), 
+                                           choices=self.MonitorList, 
+                                           style=wx.CB_DROPDOWN
+                                           | wx.CB_READONLY
+                                           | wx.CB_SORT)
+        self.Bind(wx.EVT_COMBOBOX, self.onChangeMonitor, self.thumbnailNumber)
+ 
+        sizer_1a = wx.BoxSizer(wx.HORIZONTAL)
+        
+        sizer_1a.Add(self.title_1, 0, wx.ALL, 5)
+        sizer_1a.Add(self.thumbnailNumber, 0, wx.ALL, 5)
 
+        
 # INSERT VIDEO HERE
         self.movie = wx.ArtProvider.GetBitmap(wx.ART_TIP, wx.ART_OTHER, (16, 16))
         self.inputOneIco = wx.StaticBitmap(self, wx.ID_ANY, self.movie)        
 
 
         sizer_1 = wx.BoxSizer(wx.VERTICAL)
-        sizer_1.Add(self.title_1, 0, wx.ALL, 20)
+        sizer_1.Add(sizer_1a, 0, wx.ALL, 20)
         sizer_1.Add(self.inputOneIco, 0, wx.ALL, 20)
  
         self.SetSizer(sizer_1)
 
-# Column 2:
-#   monitor selection menu staticbox
+## Column 2:
+##   monitor selection menu staticbox
 #        self.select_monitor = wx.StaticTest(self.panel, wx.ID_ANY, "Select Monitor")
-#   thumbnail combobox
-#
-#   text box for data entry
+##   thumbnail combobox
+##   text box for data entry
 #        self.sourceTXTBOX = wx.TextCtrl(self, -1,
-#                                        pos=(x*0.45, y*0.13),
 #                                        name="No monitor selected",
 #                                        style=wx.TE_READONLY)
 
