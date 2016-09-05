@@ -20,124 +20,175 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 
+# %%
 import wx, os
+import numpy as np
+import cv2
 from pvg_common import previewPanel, options
 import pysolovideo
+
+# %%
+
 
 class panelLiveView(wx.Panel):
     """
     Panel Number 2
     Live view of selected camera
     """
+
+# %%
     def __init__(self, parent):
-        """
-        """
 
         wx.Panel.__init__(self, parent, wx.ID_ANY)
 
         self.monitor_name = ''
-        self.fsPanel = previewPanel(self, size=options.GetOption("Resolution"), showtime=True)
+        self.fsPanel = previewPanel(self,
+                                    size=options.GetOption("Resolution"),
+                                    showtime=True)
 
-        sizer_1 = wx.BoxSizer(wx.VERTICAL)
-        sizer_2 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_3 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_4 = wx.BoxSizer(wx.VERTICAL)
+        sizer_overall = wx.BoxSizer(wx.HORIZONTAL)  # three columns
+        sizer_monitor = wx.BoxSizer(wx.VERTICAL)    # first column is movie
+        sizer_buttons = wx.BoxSizer(wx.VERTICAL)    # second column is buttons
+                                                    #      to control movie
+        sizer_mask = wx.BoxSizer(wx.VERTICAL)       # mask parameters
 
-        #Static box1: monitor input
-        sb_1 = wx.StaticBox(self, -1, "Select Monitor")#, size=(250,-1))
-        sbSizer_1 = wx.StaticBoxSizer (sb_1, wx.VERTICAL)
-        self.MonitorList = ['Monitor %s' % (int(m) + 1) for m in range(options.GetOption("Monitors"))]
-        self.thumbnailNumber = wx.ComboBox(self, -1, size=(-1,-1) , choices=self.MonitorList, style=wx.CB_DROPDOWN | wx.CB_READONLY | wx.CB_SORT)
+# %%
+        # Column 1: Monitor Display
+        sb_1 = wx.StaticBox(self, -1, "Select Monitor",
+                            pos=(x*0.02, y*0.02), size=(x*0.3, y*0.8))
+        sbSizer_1 = wx.StaticBoxSizer(sb_1, wx.VERTICAL)    # orientation
+
+#   monitor selection menu
+        self.MonitorList = ['Monitor %s' % (int(m) + 1)
+                            for m in range(options.GetOption("Monitors"))]
+        self.thumbnailNumber = wx.ComboBox(self, -1,
+                                           pos=(x*0.45, y*0.03),
+                                           choices=self.MonitorList,
+                                           style=wx.CB_DROPDOWN |
+                                                 wx.CB_READONLY |
+                                                 wx.CB_SORT)
         self.Bind(wx.EVT_COMBOBOX, self.onChangeMonitor, self.thumbnailNumber)
 
-        self.sourceTXTBOX =  wx.TextCtrl (self, -1, "No monitor selected", style=wx.TE_READONLY)
+#   text box for data entry
+        self.sourceTXTBOX = wx.TextCtrl(self, -1,
+                                        pos=(x*0.45, y*0.13),
+                                        name="No monitor selected",
+                                        style=wx.TE_READONLY)
 
-        sbSizer_1.Add ( self.thumbnailNumber, 0, wx.ALIGN_CENTRE|wx.LEFT|wx.RIGHT|wx.TOP, 5 )
-        sbSizer_1.Add ( self.sourceTXTBOX, 0, wx.ALIGN_CENTRE|wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, 5 )
+        sbSizer_1.Add(self.thumbnailNumber, 0, wx.ALIGN_CENTRE |
+                                               wx.LEFT |
+                                               wx.RIGHT |
+                                               wx.TOP, 5)
+        sbSizer_1.Add(self.sourceTXTBOX, 0, wx.ALIGN_CENTRE |
+                                               wx.LEFT |
+                                               wx.RIGHT |
+                                               wx.TOP, 5)
+# %%         Play video in Static Box 1
+#
+#
+#        print('Playing Video')
+#        cap = cv2.VideoCapture('c:\Users\Lori\Documents\GitHub\fly_movie.avi')
+#
+#        while(cap.isOpened()):
+#            ret, frame = cap.read()
+#
+#            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+#
+#            cv2.imshow('frame',gray)
+#            if cv2.waitKey(1) & 0xFF == ord('q'):
+#                break
+#
+#        cap.release()
+#        cv2.destroyAllWindows()
+#
 
-        #Static box2: mask parameters
-        sb_2 = wx.StaticBox(self, -1, "Mask Editing")#, size=(250,-1))
-        sbSizer_2 = wx.StaticBoxSizer (sb_2, wx.VERTICAL)
-        fgSizer_1 = wx.FlexGridSizer( 0, 2, 0, 0 )
+# %%
+#        # Static box2: Mask Parameters
+        sb_2 = wx.StaticBox(self, -1, "Mask Editing",
+                            pos=(x*0.6, y*0.02), size=(x*0.3, y*0.3))
+#        sbSizer_2 = wx.StaticBoxSizer(sb_2, wx.VERTICAL)
+        fgSizer_1 = wx.FlexGridSizer(4, 0, 10, 10)
 
-        self.btnClear = wx.Button( self, wx.ID_ANY, label="Clear All")
+        self.btnClear = wx.Button(self, wx.ID_ANY, label="Clear All")
         self.Bind(wx.EVT_BUTTON, self.fsPanel.ClearAll, self.btnClear)
 
-        self.btnClearLast = wx.Button( self, wx.ID_ANY, label="Clear selected")
+        self.btnClearLast = wx.Button(self, wx.ID_ANY, label="Clear selected")
         self.Bind(wx.EVT_BUTTON, self.fsPanel.ClearLast, self.btnClearLast)
 
-
-        self.AFValue = wx.TextCtrl (self, -1, "32")
-        self.btnAutoFill = wx.Button( self, wx.ID_ANY, label="Auto Fill")
+        self.AFValue = wx.TextCtrl(self, -1, "32")
+        self.btnAutoFill = wx.Button(self, wx.ID_ANY, label="Auto Fill")
         self.Bind(wx.EVT_BUTTON, self.onAutoMask, self.btnAutoFill)
-        #self.btnAutoFill.Enable(False)
+        # self.btnAutoFill.Enable(False)
 
-        fgSizer_1.Add (self.btnClear)
-        fgSizer_1.Add (self.btnClearLast)
-        fgSizer_1.Add (self.AFValue)
-        fgSizer_1.Add (self.btnAutoFill)
-
-        sbSizer_2.Add (fgSizer_1)
-
-
-        #Static box3: mask I/O
-        sb_3 = wx.StaticBox(self, -1, "Mask File")#, size=(250,-1))
-        sbSizer_3 = wx.StaticBoxSizer (sb_3, wx.VERTICAL)
-
-        self.currentMaskTXT = wx.TextCtrl (self, -1, "No Mask Loaded", style=wx.TE_READONLY)
-
-        btnSizer_1 = wx.BoxSizer(wx.HORIZONTAL)
-        self.btnLoad = wx.Button( self, wx.ID_ANY, label="Load Mask")
-        self.Bind(wx.EVT_BUTTON, self.onLoadMask, self.btnLoad)
-        self.btnSave = wx.Button( self, wx.ID_ANY, label="Save Mask")
-        self.Bind(wx.EVT_BUTTON, self.onSaveMask, self.btnSave)
-        self.btnSaveApply = wx.Button( self, wx.ID_ANY, label="Save and Apply")
-        self.Bind(wx.EVT_BUTTON, self.onSaveApply, self.btnSaveApply)
-
-        btnSizer_1.Add(self.btnLoad)
-        btnSizer_1.Add(self.btnSave)
-        btnSizer_1.Add(self.btnSaveApply)
-
-        sbSizer_3.Add ( self.currentMaskTXT, 0, wx.ALIGN_CENTRE|wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, 5 )
-        sbSizer_3.Add (btnSizer_1, 0, wx.ALIGN_CENTRE|wx.LEFT|wx.RIGHT|wx.TOP, 5 )
-
-        ##
-
-        #Static box4: help
-        sb_4 = wx.StaticBox(self, -1, "Help")
-        sbSizer_4 = wx.StaticBoxSizer (sb_4, wx.VERTICAL)
-        titleFont = wx.Font(10, wx.SWISS, wx.NORMAL, wx.BOLD)
-        instr = [ ('Left mouse button - single click outside ROI', 'Start dragging ROI. ROI will be a perfect rectangle'),
-                  ('Left mouse button - single click inside ROI', 'Select ROI. ROI turns red.'),
-                  ('Left mouse button - double click', 'Select corner of ROI.\nWill close ROI after fourth selection'),
-                  ('Middle mouse button - single click', 'Add currently selected ROI. ROI turns white.'),
-                  ('Right mouse button - click', 'Remove selected currently selected ROI'),
-                  ('Auto Fill', 'Will fill 32 ROIS (16x2) to fit under the last two\nselected points. To use select first upper left corner,\n then the lower right corner, then use "Auto Fill".')
-                  ]
-
-        for title, text in instr:
-            t = wx.StaticText(self, -1, title); t.SetFont(titleFont)
-            sbSizer_4.Add( t, 0, wx.ALL, 2 )
-            sbSizer_4.Add(wx.StaticText(self, -1, text) , 0 , wx.ALL, 2 )
-            sbSizer_4.Add ( (wx.StaticLine(self)), 0, wx.EXPAND|wx.TOP|wx.BOTTOM, 5 )
-
-        sizer_4.Add(sbSizer_1, 0, wx.ALIGN_CENTRE|wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, 5 )
-        sizer_4.Add(sbSizer_2, 0, wx.ALIGN_CENTRE|wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, 5 )
-        sizer_4.Add(sbSizer_3, 0, wx.ALIGN_CENTRE|wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, 5 )
-        sizer_4.Add(sbSizer_4, 0, wx.ALIGN_CENTRE|wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, 5 )
+        fgSizer_1.Add(self.btnClear)
+        fgSizer_1.Add(self.btnClearLast)
+        fgSizer_1.Add(self.AFValue)
+        fgSizer_1.Add(self.btnAutoFill)
+#
+#        sbSizer_2.Add(fgSizer_1)
 
 
-        sizer_3.Add(self.fsPanel, 0, wx.LEFT|wx.TOP, 20 )
-        sizer_3.Add(sizer_4, 0, wx.ALIGN_RIGHT|wx.LEFT|wx.RIGHT|wx.TOP, 5 )
+## %%
+#        # Static box3: mask I/O
+#        sb_3 = wx.StaticBox(self, -1, "Mask File")#, size=(250,-1))
+#        sbSizer_3 = wx.StaticBoxSizer (sb_3, wx.VERTICAL)
+#
+#        self.currentMaskTXT = wx.TextCtrl (self, -1, "No Mask Loaded", style=wx.TE_READONLY)
+#
+#        btnSizer_1 = wx.BoxSizer(wx.HORIZONTAL)
+#        self.btnLoad = wx.Button( self, wx.ID_ANY, label="Load Mask")
+#        self.Bind(wx.EVT_BUTTON, self.onLoadMask, self.btnLoad)
+#        self.btnSave = wx.Button( self, wx.ID_ANY, label="Save Mask")
+#        self.Bind(wx.EVT_BUTTON, self.onSaveMask, self.btnSave)
+#        self.btnSaveApply = wx.Button( self, wx.ID_ANY, label="Save and Apply")
+#        self.Bind(wx.EVT_BUTTON, self.onSaveApply, self.btnSaveApply)
+#
+#        btnSizer_1.Add(self.btnLoad)
+#        btnSizer_1.Add(self.btnSave)
+#        btnSizer_1.Add(self.btnSaveApply)
+#
+#        sbSizer_3.Add ( self.currentMaskTXT, 0, wx.ALIGN_CENTRE|wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, 5 )
+#        sbSizer_3.Add (btnSizer_1, 0, wx.ALIGN_CENTRE|wx.LEFT|wx.RIGHT|wx.TOP, 5 )
+#
+#        ##
+#
+## %%        # Static box4: help
+#        sb_4 = wx.StaticBox(self, -1, "Help")
+#        sbSizer_4 = wx.StaticBoxSizer (sb_4, wx.VERTICAL)
+#        titleFont = wx.Font(10, wx.SWISS, wx.NORMAL, wx.BOLD)
+#        instr = [ ('Left mouse button - single click outside ROI', 'Start dragging ROI. ROI will be a perfect rectangle'),
+#                  ('Left mouse button - single click inside ROI', 'Select ROI. ROI turns red.'),
+#                  ('Left mouse button - double click', 'Select corner of ROI.\nWill close ROI after fourth selection'),
+#                  ('Middle mouse button - single click', 'Add currently selected ROI. ROI turns white.'),
+#                  ('Right mouse button - click', 'Remove selected currently selected ROI'),
+#                  ('Auto Fill', 'Will fill 32 ROIS (16x2) to fit under the last two\nselected points. To use select first upper left corner,\n then the lower right corner, then use "Auto Fill".')
+#                  ]
+#
+#        for title, text in instr:
+#            t = wx.StaticText(self, -1, title); t.SetFont(titleFont)
+#            sbSizer_4.Add( t, 0, wx.ALL, 2 )
+#            sbSizer_4.Add(wx.StaticText(self, -1, text) , 0 , wx.ALL, 2 )
+#            sbSizer_4.Add ( (wx.StaticLine(self)), 0, wx.EXPAND|wx.TOP|wx.BOTTOM, 5 )
+#
+#        sizer_4.Add(sbSizer_1, 0, wx.ALIGN_CENTRE|wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, 5 )
+#        sizer_4.Add(sbSizer_2, 0, wx.ALIGN_CENTRE|wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, 5 )
+#        sizer_4.Add(sbSizer_3, 0, wx.ALIGN_CENTRE|wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, 5 )
+#        sizer_4.Add(sbSizer_4, 0, wx.ALIGN_CENTRE|wx.LEFT|wx.RIGHT|wx.TOP|wx.EXPAND, 5 )
+#
+#
+#        sizer_3.Add(self.fsPanel, 0, wx.LEFT|wx.TOP, 20 )
+#        sizer_3.Add(sizer_4, 0, wx.ALIGN_RIGHT|wx.LEFT|wx.RIGHT|wx.TOP, 5 )
+#
+#        sizer_1.Add(sizer_3, 0, wx.ALIGN_CENTRE|wx.LEFT|wx.RIGHT|wx.TOP, 5 )
+#        sizer_1.Add(sizer_2, 0, wx.ALIGN_CENTRE|wx.LEFT|wx.RIGHT|wx.TOP, 5 )
+#
+#
+#        self.SetSizer(sizer_1)
+#        print wx.Window.FindFocus()
+#
+#        self.Bind( wx.EVT_CHAR, self.fsPanel.onKeyPressed )
 
-        sizer_1.Add(sizer_3, 0, wx.ALIGN_CENTRE|wx.LEFT|wx.RIGHT|wx.TOP, 5 )
-        sizer_1.Add(sizer_2, 0, wx.ALIGN_CENTRE|wx.LEFT|wx.RIGHT|wx.TOP, 5 )
-
-
-        self.SetSizer(sizer_1)
-        print wx.Window.FindFocus()
-
-        self.Bind( wx.EVT_CHAR, self.fsPanel.onKeyPressed )
+# %%
 
     def StopPlaying(self):
         """
@@ -145,6 +196,7 @@ class panelLiveView(wx.Panel):
         if self.fsPanel and self.fsPanel.isPlaying: self.fsPanel.Stop()
 
 
+# %%
     def onChangeMonitor(self, event):
         """
         FIX THIS
@@ -175,6 +227,7 @@ class panelLiveView(wx.Panel):
                 self.sourceTXTBOX.SetValue('No Source for this monitor')
 
 
+# %%
     def onAutoMask(self, event):
         """
         """
@@ -182,6 +235,7 @@ class panelLiveView(wx.Panel):
         self.fsPanel.autoDivideMask(n_roi)
 
 
+# %%
     def onSaveMask(self, event):
         """
         Save ROIs to File
@@ -195,7 +249,7 @@ class panelLiveView(wx.Panel):
             defaultFile=filename, wildcard=wildcard, style=wx.SAVE
             )
 
-        #dlg.SetFilterIndex(2)
+        # dlg.SetFilterIndex(2)
 
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
@@ -205,6 +259,7 @@ class panelLiveView(wx.Panel):
         dlg.Destroy()
         return path
 
+# %%
     def onSaveApply(self, event):
         """
         Save ROIs to file and apply to current monitor
@@ -214,6 +269,7 @@ class panelLiveView(wx.Panel):
         options.setValue(mn, 'maskfile', path)
         options.Save()
 
+# %%
     def onLoadMask(self, event):
         """
         Load Mask from file
@@ -236,5 +292,7 @@ class panelLiveView(wx.Panel):
 
         dlg.Destroy()
 
-    def onRefresh(self):
-        self.Destroy()
+
+
+x, y = options.GetOption("Resolution")    # screen resolution global variables.
+
