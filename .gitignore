@@ -1,2 +1,6 @@
+<<<<<<< HEAD
+*.pyc
+=======
 *.pyc
 accessories/__init__.pyc
+>>>>>>> master

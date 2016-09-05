@@ -48,7 +48,6 @@ class thumbnailPanel(previewPanel):
 
     def displayNumber(self):
         """
-        Displays the monitor number of this thumbnail
         """
         # font type: wx.DEFAULT, wx.DECORATIVE, wx.ROMAN, wx.SCRIPT, wx.SWISS, wx.MODERN
         # slant: wx.NORMAL, wx.SLANT or wx.ITALIC
@@ -118,11 +117,11 @@ class panelGridView(wx.ScrolledWindow):
                 old -= 1
                 self.grid_mainSizer.Layout()
 
-    def updateThumbs(self, old, new): # Size of thumbnails has been changed from Options
+    def updateThumbs(self, old, new):
         self.thumbnailSize = new
-        for i in range(0, self.gridSize): # Set the size of each thumbnail
+        for i in range(0, self.gridSize):
             self.previewPanels[i].SetThumbnailsize(new)
-            self.grid_mainSizer.Layout() # Show GUI changes
+            self.grid_mainSizer.Layout()
 
     def onThumbnailClicked(self, event):
         """
@@ -432,18 +431,20 @@ class panelConfigure(wx.Panel):
         if self.thumbnail:
             self.thumbnail.mon.isSDMonitor = event.IsChecked()
 
+
 class panelOne(wx.Panel):
     """
     Panel number One
     All the thumbnails
     """
     def __init__(self, parent):
+
         wx.Panel.__init__(self, parent)
 
         monitor_number = options.GetOption("Monitors")
-        self.mon_num = monitor_number # Global variables used for UI updating
+        self.mon_num = monitor_number
         tn_size = options.GetOption("ThumbnailSize")
-        self.thumb_size = tn_size # Global variables used for UI updating
+        self.thumb_size = tn_size
 
         self.temp_source  = ''
         self.source = ''
@@ -462,12 +463,12 @@ class panelOne(wx.Panel):
         """
         self.lowerPanel.onStop()
 
-    def onRefresh(self): # Implement any changes made in Options dialog
+    def onRefresh(self):
         monitor_number = options.GetOption("Monitors")
-        if self.mon_num != monitor_number: # If number of monitors changed
+        if self.mon_num != monitor_number:
             self.scrollThumbnails.updateMonitors(self.mon_num, monitor_number)
         tn_size = options.GetOption("ThumbnailSize")
-        if self.thumb_size != tn_size: # If thumbnail size changed
+        if self.thumb_size != tn_size:
             self.scrollThumbnails.updateThumbs(self.thumb_size, tn_size)
         self.PanelOneSizer.Layout()
         self.Layout()

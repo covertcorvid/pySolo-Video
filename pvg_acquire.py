@@ -62,10 +62,9 @@ class partial: #AKA curry
 
         return self.fun(*(self.pending + args), **kw)
 
-class comboFileBrowser(wx.ComboBox): # Dropdown menus that allow opening of file dialog
-    def __init__(self, parent, id=-1,  pos=(-1,-1), size=(-1,-1), value="",
-    choices=[], style=0, dialogTitle = "Choose a File", startDirectory = ".",
-    fileMask = "*.*", browsevalue="Browse for file", changeCallback= None):
+class comboFileBrowser(wx.ComboBox):
+    def __init__(self, parent, id=-1,  pos=(-1,-1), size=(-1,-1), value="", choices=[], style=0, dialogTitle = "Choose a File", startDirectory = ".", fileMask = "*.*", browsevalue="Browse for file", changeCallback= None):
+
         choices = list(set([value] + choices ))
         choices.sort()
         self.fileMask = fileMask
@@ -75,16 +74,15 @@ class comboFileBrowser(wx.ComboBox): # Dropdown menus that allow opening of file
         self.browsevalue=browsevalue
         self.changeCallback = changeCallback
 
-        wx.ComboBox.__init__(self, parent, id, value, pos, size,
-            choices + [browsevalue], style=wx.CB_DROPDOWN | wx.CB_READONLY | wx.CB_SORT)
+        wx.ComboBox.__init__(self, parent, id, value, pos, size, choices + [browsevalue], style=wx.CB_DROPDOWN | wx.CB_READONLY | wx.CB_SORT)
         self.Bind(wx.EVT_COMBOBOX, self.onItemChanged)
 
     def onItemChanged(self, event):
         """
-        If the combobox selection has been changed, act accordingly
         """
-        if event.GetString() == self.browsevalue: # Browse for a file
-            dlg = wx.FileDialog( # Open file dialog
+        if event.GetString() == self.browsevalue:
+
+            dlg = wx.FileDialog(
                 self, message=self.dialogTitle,
                 defaultDir=self.startDirectory,
                 defaultFile=self.defaultFile,
@@ -92,86 +90,119 @@ class comboFileBrowser(wx.ComboBox): # Dropdown menus that allow opening of file
                 style=wx.OPEN | wx.CHANGE_DIR
                 )
 
-            if dlg.ShowModal() == wx.ID_OK: # If the user selected a file
-                path = dlg.GetPath() # Get the path
-                __, filename = os.path.split(path) # Get the file name
-                self.Append(filename) # Add the file name to the combobox
-                self.SetValue(filename) # Set the combobox's selection to the file name
+            if dlg.ShowModal() == wx.ID_OK:
+                path = dlg.GetPath()
+                __, filename = os.path.split(path)
+                self.Append(filename)
+                self.SetValue(filename)
                 event.SetString(path)
                 #self.Command(event)
 
-            dlg.Destroy() # Destroy the file browse dialog
 
+            dlg.Destroy()
+
+        #event.SetValue(filename)
         self.changeCallback(event=event)
 
-class pvg_AcquirePanel(wx.Panel): # The display of the monitor list and recording options
+class pvg_AcquirePanel(wx.Panel):
     def __init__(self, parent):
+
         wx.Panel.__init__(self, parent, wx.ID_ANY)
         self.frame = parent
 
-        self.loadMonitors() # Load monitors from options file
-        self.drawPanel() # Add UI items to the panel
+        self.loadMonitors()
+        self.drawPanel()
 
-        self.timer = wx.Timer(self) # Create the timer
+        self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.updateTimes, self.timer)
         self.dopreview = False
 
-        cv2.namedWindow("preview") # Open the preview window
+        cv2.namedWindow("preview")
 
     def onRefresh(self):
-        """
-        Called when the options dialog has been closed with an "OK"
-        """
         # Determine what changes must be made
-        old_mons = self.mon_num # How many monitors we have right now
-        old_cams = self.num_cams # How many cameras we have right now
-        self.mon_num = options.GetOption("Monitors") # Get desired number of monitors from config file
-        self.num_cams = options.GetOption("Webcams") # Get desired number of webcams from config file
+        old_mons = self.mon_num
+        old_cams = self.num_cams
+        self.mon_num = options.GetOption("Monitors")
+        self.num_cams = options.GetOption("Webcams")
 
-        if old_mons != self.mon_num: # If current number of monitors doesn't match config file, update
+        if old_mons != self.mon_num:
             self.updateMonNum(old_mons)
-        if old_cams != self.num_cams: # If current number of cameras doesn't match config file, update
+        if old_cams != self.num_cams:
             self.updateNumCams(old_cams)
 
     def updateMonNum(self, old):
-        """
-        Updates the number of monitors
-        """
-        diff = old - self.mon_num # Determine how many must be added or subtracted
-        i = diff # Variable for loop
+        diff = old - self.mon_num
+        i = diff
         # Number of items in gridsizer = 9 labels + (9 items per monitor)
+        amnt = (old+1) * 9
 
-        amnt = (old+1) * 9 # Used when removing monitors
-
-        # Used when adding monitors
         mn = old+1
         WebcamsList = [ 'Camera %02d' % (int(w) +1) for w in range( self.num_cams ) ]
         colLabels = ['Status', 'Monitor', 'Source', 'Mask', 'Output', 'Track type', 'Track', 'uptime', 'preview']
         tracktypes = ['DISTANCE','VBS','XY_COORDS']
-
-        # While we still have monitors to go...
         while i != 0:
-            if diff < 0:  # Add monitor
+            if diff < 0:
+                # Add monitor
                 i += 1
-                self.drawSingleMonitor(mn, WebcamsList, tracktypes)
+                if not options.HasMonitor(mn):
+                    options.SetMonitor(mn)
+                md = options.GetMonitor(mn)
+
+                try:
+                    _, source = os.path.split( md['source'] )
+                except:
+                    source = 'Camera %02d' % ( md['source'] )
+
+                _, mf = os.path.split(md['mask_file'])
+                df = 'Monitor%02d.txt' % (mn)
+
+                #ICON
+                self.status.append( wx.StaticBitmap(self, -1, wx.EmptyBitmap(16,16)) )
+                self.gridSizer.Add(self.status[-1], 0, wx.ALL|wx.ALIGN_CENTER, 5)
+                self.changeIcon(mn)
+
+                #TEXT
+                self.gridSizer.Add(wx.StaticText(self, -1, "Monitor %s" % mn ), 0, wx.ALL|wx.ALIGN_CENTER, 5)
+                self.gridSizer.Add(comboFileBrowser(self, wx.ID_ANY, size=(-1,-1), dialogTitle = "Choose an Input video file", startDirectory = options.GetOption("Data_Folder"), value = source, choices=WebcamsList, fileMask = "Video File (*.*)|*.*", browsevalue="Browse for video...", changeCallback = partial(self.onChangeDropDown, [mn, "source"])), 0, wx.ALL|wx.ALIGN_CENTER, 5 )
+                self.gridSizer.Add(comboFileBrowser(self, wx.ID_ANY, size=(-1,-1), dialogTitle = "Choose a Mask file", startDirectory = options.GetOption("Mask_Folder"), value = mf, fileMask = "pySolo mask file (*.msk)|*.msk", browsevalue="Browse for mask...", changeCallback = partial(self.onChangeDropDown, [mn, "mask_file"])), 0, wx.ALL|wx.ALIGN_CENTER, 5 )
+                self.gridSizer.Add(comboFileBrowser(self, wx.ID_ANY, size=(-1,-1), dialogTitle = "Choose the output file", startDirectory = options.GetOption("Data_Folder"), value = md['outputfile'], fileMask = "Output File (*.txt)|*.txt", browsevalue="Browse for output...", changeCallback = partial(self.onChangeDropDown, [mn, "outputfile"])), 0, wx.ALL|wx.ALIGN_CENTER, 5 )
+
+                #TRACKTYPE
+                ttcb = wx.ComboBox(self, -1, size=(-1,-1), value=md['track_type'], choices=tracktypes, style=wx.CB_DROPDOWN | wx.CB_READONLY | wx.CB_SORT)
+                ttcb.Bind (wx.EVT_COMBOBOX, partial(self.onChangeDropDown, [mn, "track_type"]))
+                self.gridSizer.Add(ttcb , 0, wx.ALL|wx.ALIGN_CENTER, 5)
+
+                #RECORD BUTTON
+                self.recordBTNS.append ( wx.ToggleButton(self, wx.ID_ANY, 'Start') )
+                self.recordBTNS[-1].Bind (wx.EVT_TOGGLEBUTTON, partial( self.onToggleRecording, mn))
+                self.gridSizer.Add(self.recordBTNS[-1], 0, wx.ALL|wx.ALIGN_CENTER, 5)
+
+                #UPTIME
+                self.uptimeTXT.append(wx.TextCtrl(self, value="00:00:00", size=(140,-1)))
+                self.gridSizer.Add(self.uptimeTXT[-1], 0, wx.ALL|wx.ALIGN_CENTER, 5)
+
+                #VIEW BUTTON
+                vb = wx.Button(self, wx.ID_ANY, 'View')
+                vb.Bind(wx.EVT_BUTTON, partial( self.onViewMonitor, mn))
+                self.gridSizer.Add(vb, 0, wx.ALL|wx.ALIGN_CENTER, 5)
+
                 mn += 1
-                self.gridSizer.Layout() # Show changes to the GUI
-            elif diff > 0: # Remove monitor
-                for j in range(1, 10): # Each monitor has a 9-item row in the gridsizer
+                self.gridSizer.Layout()
+            elif diff > 0:
+                # Remove monitor - 9 elements in each row
+                for j in range(1, 10):
                     if self.gridSizer.GetChildren():
                         self.gridSizer.Hide(amnt-j)
                         self.gridSizer.Remove(amnt-j)
-                amnt -= 9 # Keeps track of indeces in gridsizer
+                amnt -= 9
                 i -= 1
-                self.gridSizer.Layout() # Show changes to the GUI
+                self.gridSizer.Layout()
 
     def updateNumCams(self, old):
-        """
-        Updates the camera combofilebrowser when the number of cameras changes
-        """
         WebcamsList = [ 'Camera %02d' % (int(w) +1) for w in range( self.num_cams ) ]
-        i = 3 # The combofilebrowser is the 3rd item in each row
-        for mn in range(1, self.mon_num + 1): # For each monitor
+        i = 3
+        for mn in range(1, self.mon_num + 1):
             if not options.HasMonitor(mn):
                 options.SetMonitor(mn) #If monitor does not exist in options we create it
             md = options.GetMonitor(mn)
@@ -181,54 +212,48 @@ class pvg_AcquirePanel(wx.Panel): # The display of the monitor list and recordin
             except:
                 source = 'Camera %02d' % ( md['source'] )
             self.gridSizer.Hide(i)
-            self.gridSizer.Remove(i) # Remove the outdated dropdown menu
-            self.gridSizer.Insert(i, # Insert a new dropdown menu in its place
-                comboFileBrowser(self, wx.ID_ANY, size=(-1,-1),
-                    dialogTitle = "Choose an Input video file",
-                    startDirectory = options.GetOption("Data_Folder"),
-                    value = source, choices=WebcamsList, fileMask = "Video File (*.*)|*.*",
-                    browsevalue="Browse for video...",
-                    changeCallback = partial(self.onChangeDropDown, [mn, "source"])),
-                0, wx.ALL|wx.ALIGN_CENTER, 5 )
-            self.gridSizer.Layout() # Show changes on GUI
-            i += 9 # Move to next monitor (gridsizer rows are 9 items wide)
+            self.gridSizer.Remove(i)
+            self.gridSizer.Insert(i, comboFileBrowser(self, wx.ID_ANY, size=(-1,-1), dialogTitle = "Choose an Input video file", startDirectory = options.GetOption("Data_Folder"), value = source, choices=WebcamsList, fileMask = "Video File (*.*)|*.*", browsevalue="Browse for video...", changeCallback = partial(self.onChangeDropDown, [mn, "source"])), 0, wx.ALL|wx.ALIGN_CENTER, 5 )
+            self.gridSizer.Layout()
+            i += 9
 
-    def drawPanel(self): # Draw the main interface
+    def drawPanel(self):
         for child in self.GetChildren():
             child.Destroy()
 
-        self.mon_num = options.GetOption("Monitors") # Get number of monitors from config file
-        self.num_cams = options.GetOption("Webcams") # Get number of cameras from config file
+        self.mon_num = options.GetOption("Monitors")
+        self.num_cams = options.GetOption("Webcams")
         monitorsData = options.getMonitorsData()
         self.monitorsData = monitorsData
 
-        WebcamsList = [ 'Camera %02d' % (int(w) +1) for w in range( self.num_cams ) ] # Generate a list of cameras
+        WebcamsList = [ 'Camera %02d' % (int(w) +1) for w in range( self.num_cams ) ]
         colLabels = ['Status', 'Monitor', 'Source', 'Mask', 'Output', 'Track type', 'Track', 'uptime', 'preview']
         tracktypes = ['DISTANCE','VBS','XY_COORDS']
 
         # create layouts and their items
         mainSizer = wx.BoxSizer(wx.VERTICAL)
-        self.drawMonitorGrid(self.mon_num, colLabels, WebcamsList, tracktypes)
-        btnSizer = self.drawButtons() # The buttons that do not go with a particular monitor
+        gridSizer = self.drawMonitorGrid(self.mon_num, colLabels, WebcamsList, tracktypes)
+        btnSizer = self.drawButtons()
 
         # Add monitor grid and buttons to main layout
-        mainSizer.Add(self.gridSizer, 1, wx.EXPAND, 0)
+        #mainSizer.Add(self.FBconfig, 0, wx.EXPAND|wx.ALL, 5)
+        mainSizer.Add(gridSizer, 1, wx.EXPAND, 0)
         mainSizer.Add(btnSizer, 0, wx.ALL, 5)
         mainSizer.Layout()
 
-        # Store sizers as global variables in order to update UI later
+        self.gridSizer = gridSizer
         self.mainSizer = mainSizer
-        self.SetSizer(mainSizer) # Make the panel display the mainSizer and its contents
+        self.SetSizer(mainSizer)
         self.Refresh()
 
     def drawMonitorGrid(self, mon_num, colLabels, WebcamsList, tracktypes):
-        self.gridSizer = wx.FlexGridSizer (cols=len(colLabels), vgap=5, hgap=5)  #wx.BoxSizer(wx.VERTICAL)
+        gridSizer = wx.FlexGridSizer (cols=len(colLabels), vgap=5, hgap=5)  #wx.BoxSizer(wx.VERTICAL)
 
         #FIRST ROW
         for key in colLabels:
             text = wx.StaticText(self, -1, key )
             text.SetFont( wx.Font(12, wx.SWISS, wx.NORMAL, wx.BOLD) )
-            self.gridSizer.Add(text, 0, wx.ALL|wx.ALIGN_CENTER, 5)
+            gridSizer.Add(text, 0, wx.ALL|wx.ALIGN_CENTER, 5)
 
         self.status = []
         self.recordBTNS = []
@@ -236,76 +261,49 @@ class pvg_AcquirePanel(wx.Panel): # The display of the monitor list and recordin
 
         #LOOP THROUGH
         for mn in range(1, mon_num+1):
-            self.drawSingleMonitor(mn, WebcamsList, tracktypes)
+            if not options.HasMonitor(mn):
+                options.SetMonitor(mn) #If monitor does not exist in options we create it
+            md = options.GetMonitor(mn)
 
-        #return gridSizer
+            try:
+                _, source = os.path.split( md['source'] )
+            except:
+                source = 'Camera %02d' % ( md['source'] )
 
-    def drawSingleMonitor(self, mn, WebcamsList, tracktypes):
-        if not options.HasMonitor(mn):
-            options.SetMonitor(mn)
-        md = options.GetMonitor(mn)
+            _, mf = os.path.split(md['mask_file'])
+            df = 'Monitor%02d.txt' % (mn)
 
-        try:
-            _, source = os.path.split( md['source'] )
-        except:
-            source = 'Camera %02d' % ( md['source'] )
+            #ICON
+            self.status.append( wx.StaticBitmap(self, -1, wx.EmptyBitmap(16,16)) )
+            gridSizer.Add(self.status[-1], 0, wx.ALL|wx.ALIGN_CENTER, 5)
+            self.changeIcon(mn)
 
-        _, mf = os.path.split(md['mask_file'])
-        df = 'Monitor%02d.txt' % (mn)
+            #TEXT
+            gridSizer.Add(wx.StaticText(self, -1, "Monitor %s" % mn ), 0, wx.ALL|wx.ALIGN_CENTER, 5)
+            gridSizer.Add(comboFileBrowser(self, wx.ID_ANY, size=(-1,-1), dialogTitle = "Choose an Input video file", startDirectory = options.GetOption("Data_Folder"), value = source, choices=WebcamsList, fileMask = "Video File (*.*)|*.*", browsevalue="Browse for video...", changeCallback = partial(self.onChangeDropDown, [mn, "source"])), 0, wx.ALL|wx.ALIGN_CENTER, 5 )
+            gridSizer.Add(comboFileBrowser(self, wx.ID_ANY, size=(-1,-1), dialogTitle = "Choose a Mask file", startDirectory = options.GetOption("Mask_Folder"), value = mf, fileMask = "pySolo mask file (*.msk)|*.msk", browsevalue="Browse for mask...", changeCallback = partial(self.onChangeDropDown, [mn, "mask_file"])), 0, wx.ALL|wx.ALIGN_CENTER, 5 )
+            gridSizer.Add(comboFileBrowser(self, wx.ID_ANY, size=(-1,-1), dialogTitle = "Choose the output file", startDirectory = options.GetOption("Data_Folder"), value = md['outputfile'], fileMask = "Output File (*.txt)|*.txt", browsevalue="Browse for output...", changeCallback = partial(self.onChangeDropDown, [mn, "outputfile"])), 0, wx.ALL|wx.ALIGN_CENTER, 5 )
 
-        #ICON
-        self.status.append( wx.StaticBitmap(self, -1, wx.EmptyBitmap(16,16)) )
-        self.gridSizer.Add(self.status[-1], 0, wx.ALL|wx.ALIGN_CENTER, 5)
-        self.changeIcon(mn)
+            #TRACKTYPE
+            ttcb = wx.ComboBox(self, -1, size=(-1,-1), value=md['track_type'], choices=tracktypes, style=wx.CB_DROPDOWN | wx.CB_READONLY | wx.CB_SORT)
+            ttcb.Bind (wx.EVT_COMBOBOX, partial(self.onChangeDropDown, [mn, "track_type"]))
+            gridSizer.Add(ttcb , 0, wx.ALL|wx.ALIGN_CENTER, 5)
 
-        #TEXT
-        self.gridSizer.Add( # Monitor number label
-            wx.StaticText(self, -1, "Monitor %s" % mn ), 0, wx.ALL|wx.ALIGN_CENTER, 5)
-        self.gridSizer.Add( # Choose video input
-            comboFileBrowser(self, wx.ID_ANY, size=(-1,-1),
-                dialogTitle = "Choose an Input video file",
-                startDirectory = options.GetOption("Data_Folder"),
-                value = source, choices=WebcamsList,
-                fileMask = "Video File (*.*)|*.*",
-                browsevalue="Browse for video...",
-                changeCallback = partial(self.onChangeDropDown, [mn, "source"])),
-            0, wx.ALL|wx.ALIGN_CENTER, 5 )
-        self.gridSizer.Add( # Choose mask file
-            comboFileBrowser(self, wx.ID_ANY, size=(-1,-1),
-                dialogTitle = "Choose a Mask file",
-                startDirectory = options.GetOption("Mask_Folder"),
-                value = mf, fileMask = "pySolo mask file (*.msk)|*.msk",
-                browsevalue="Browse for mask...",
-                changeCallback = partial(self.onChangeDropDown, [mn, "mask_file"])),
-            0, wx.ALL|wx.ALIGN_CENTER, 5 )
-        self.gridSizer.Add( # Choose output file
-            comboFileBrowser(self, wx.ID_ANY, size=(-1,-1),
-                dialogTitle = "Choose the output file",
-                startDirectory = options.GetOption("Data_Folder"),
-                value = md['outputfile'], fileMask = "Output File (*.txt)|*.txt",
-                browsevalue="Browse for output...",
-                changeCallback = partial(self.onChangeDropDown, [mn, "outputfile"])),
-            0, wx.ALL|wx.ALIGN_CENTER, 5 )
+            #RECORD BUTTON
+            self.recordBTNS.append ( wx.ToggleButton(self, wx.ID_ANY, 'Start') )
+            self.recordBTNS[-1].Bind (wx.EVT_TOGGLEBUTTON, partial( self.onToggleRecording, mn))
+            gridSizer.Add(self.recordBTNS[-1], 0, wx.ALL|wx.ALIGN_CENTER, 5)
 
-        #TRACKTYPE
-        ttcb = wx.ComboBox(self, -1, size=(-1,-1), value=md['track_type'],
-            choices=tracktypes, style=wx.CB_DROPDOWN | wx.CB_READONLY | wx.CB_SORT)
-        ttcb.Bind (wx.EVT_COMBOBOX, partial(self.onChangeDropDown, [mn, "track_type"]))
-        self.gridSizer.Add(ttcb , 0, wx.ALL|wx.ALIGN_CENTER, 5)
+            #UPTIME
+            self.uptimeTXT.append(wx.TextCtrl(self, value="00:00:00", size=(140,-1)))
+            gridSizer.Add(self.uptimeTXT[-1], 0, wx.ALL|wx.ALIGN_CENTER, 5)
 
-        #RECORD BUTTON
-        self.recordBTNS.append ( wx.ToggleButton(self, wx.ID_ANY, 'Start') )
-        self.recordBTNS[-1].Bind (wx.EVT_TOGGLEBUTTON, partial( self.onToggleRecording, mn))
-        self.gridSizer.Add(self.recordBTNS[-1], 0, wx.ALL|wx.ALIGN_CENTER, 5)
+            #VIEW BUTTON
+            vb = wx.Button(self, wx.ID_ANY, 'View')
+            vb.Bind(wx.EVT_BUTTON, partial( self.onViewMonitor, mn))
+            gridSizer.Add(vb, 0, wx.ALL|wx.ALIGN_CENTER, 5)
 
-        #UPTIME
-        self.uptimeTXT.append(wx.TextCtrl(self, value="00:00:00", size=(140,-1)))
-        self.gridSizer.Add(self.uptimeTXT[-1], 0, wx.ALL|wx.ALIGN_CENTER, 5)
-
-        #VIEW BUTTON
-        vb = wx.Button(self, wx.ID_ANY, 'View')
-        vb.Bind(wx.EVT_BUTTON, partial( self.onViewMonitor, mn))
-        self.gridSizer.Add(vb, 0, wx.ALL|wx.ALIGN_CENTER, 5)
+        return gridSizer
 
     def drawButtons(self):
         btnSizer = wx.BoxSizer(wx.HORIZONTAL)

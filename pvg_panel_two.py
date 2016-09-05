@@ -25,9 +25,9 @@ import wx, os
 import numpy as np
 import cv2
 from pvg_common import previewPanel, options
-import pysolovideo
+#import pysolovideo
 
-x, y = options.GetOption("Resolution")    # screen resolution 
+x, y = options.GetOption("Resolution")    # screen resolution
 
 
 # %%
@@ -54,20 +54,74 @@ class panelLiveView(wx.Panel):
         sizer_3 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_4 = wx.BoxSizer(wx.VERTICAL)
 
+# %%
+# Column 1: Monitor Display
 # %% Static Box 1:  Monitor input
         sb_1 = wx.StaticBox(self, -1, "Select Monitor")
         sbSizer_1 = wx.StaticBoxSizer(sb_1, wx.VERTICAL)    # orientation
 
-#   monitor selection menu
+# Column 2:
+#   monitor selection menu staticbox
+        self.select_monitor = wx.StaticBox(self, -1, "Select Monitor")   # title
+        # ,
+        #                    pos=(x*0.02, y*0.02), size=(x*0.3, y*0.8))
         self.MonitorList = ['Monitor %s' % (int(m) + 1)
                             for m in range(options.GetOption("Monitors"))]
+#   thumbnail combobox
         self.thumbnailNumber = wx.ComboBox(self, -1,
-                                           pos=(x*0.45, y*0.03),
+#                                           pos=(x*0.45, y*0.03),
                                            choices=self.MonitorList,
                                            style=wx.CB_DROPDOWN |
                                                  wx.CB_READONLY |
                                                  wx.CB_SORT)
         self.Bind(wx.EVT_COMBOBOX, self.onChangeMonitor, self.thumbnailNumber)
+
+#   text box for data entry
+        self.sourceTXTBOX = wx.TextCtrl(self, -1,
+#                                        pos=(x*0.45, y*0.13),
+                                        name="No monitor selected",
+                                        style=wx.TE_READONLY)
+
+#   apply the boxes to the sizer
+        sizer_monitor.Add(self.select_monitor, 0, wx.ALIGN_CENTRE |
+                                               wx.LEFT |
+                                               wx.RIGHT |
+                                               wx.TOP, 5)
+        sizer_monitor.Add(self.thumbnailNumber, 0, wx.ALIGN_CENTRE |
+                                               wx.LEFT |
+                                               wx.RIGHT |
+                                               wx.TOP, 5)
+        sizer_monitor.Add(self.sourceTXTBOX, 0, wx.ALIGN_CENTRE |
+                                               wx.LEFT |
+                                               wx.RIGHT |
+                                               wx.TOP, 5)
+
+## %%
+##        Mask Parameters
+#        mask_editing = wx.StaticBox(self, -1, "Mask Editing")
+## ,
+##                            pos=(x*0.6, y*0.02), size=(x*0.3, y*0.3))
+##        sbSizer_2 = wx.StaticBoxSizer(sb_2, wx.VERTICAL)
+#        fgSizer_1 = wx.FlexGridSizer(4, 0, 10, 10)
+#
+#        self.btnClear = wx.Button(self, wx.ID_ANY, label="Clear All")
+#        self.Bind(wx.EVT_BUTTON, self.fsPanel.ClearAll, self.btnClear)
+#
+#        self.btnClearLast = wx.Button(self, wx.ID_ANY, label="Clear selected")
+#        self.Bind(wx.EVT_BUTTON, self.fsPanel.ClearLast, self.btnClearLast)
+#
+#        self.AFValue = wx.TextCtrl(self, -1, "32")
+#        self.btnAutoFill = wx.Button(self, wx.ID_ANY, label="Auto Fill")
+#        self.Bind(wx.EVT_BUTTON, self.onAutoMask, self.btnAutoFill)
+#        # self.btnAutoFill.Enable(False)
+#
+#        fgSizer_1.Add(self.btnClear)
+#        fgSizer_1.Add(self.btnClearLast)
+#        fgSizer_1.Add(self.AFValue)
+#        fgSizer_1.Add(self.btnAutoFill)
+#
+#        sbSizer_2.Add(fgSizer_1)
+
 
 ##   text box for data entry
 #        self.sourceTXTBOX = wx.TextCtrl(self, -1,

@@ -210,15 +210,10 @@ class mainFrame(wx.Frame):
 # %%
 
     def onConfigure(self, event):
-        """Opens the configure dialog.
-           Implements any options changes."""
-        frame_opt = optionsFrame(self) # Creates the dialog frame_opt using pvg_options
-        res = frame_opt.ShowModal() # Find out whether OK or Cancel was clicked
-        frame_opt.Destroy() # Get rid of the dialog
-        if res == wx.ID_OK: # If the user clicked OK, implement any changes
-            self.videoNotebook.updateUI()
-        elif res == wx.ID_CANCEL: # Otherwise, do nothing
-            print "no changes were made"
+        """
+        """
+        frame_opt = optionsFrame(self, -1, '')
+        frame_opt.Show()
 
 # %%
 
@@ -248,13 +243,6 @@ class mainNotebook(wx.Notebook):
 
         self.Layout()
 
-# %%    Updates window after change of configuration
-        
-    def updateUI(self):
-        self.panelOne.onRefresh()
-        self.panelTwo.onRefresh()
-        self.Layout()
-        
 # %%
 
     def OnPageChanging(self, event):
@@ -275,5 +263,3 @@ if __name__ == "__main__":
     frame_1.Show()
     app.SetTopWindow(frame_1)
     app.MainLoop()                        # begin interaction with user
-
-
