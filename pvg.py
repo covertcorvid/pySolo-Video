@@ -212,8 +212,14 @@ class mainFrame(wx.Frame):
     def onConfigure(self, event):
         """
         """
-        frame_opt = optionsFrame(self, -1, '')
-        frame_opt.Show()
+        frame_opt = optionsFrame(self)
+        #frame_opt.Show()
+        res = frame_opt.ShowModal()
+        frame_opt.Destroy()
+        if res == wx.ID_OK:
+            self.videoNotebook.updateUI()
+        elif res == wx.ID_CANCEL:
+            print "no changes were made"
 
 # %%
 
@@ -241,6 +247,13 @@ class mainNotebook(wx.Notebook):
 
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGING, self.OnPageChanging)
 
+        self.Layout()
+
+# %%
+
+    def updateUI(self):
+        self.panelOne.onRefresh()
+        self.panelTwo.onRefresh()
         self.Layout()
 
 # %%
