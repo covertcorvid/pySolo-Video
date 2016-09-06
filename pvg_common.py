@@ -87,12 +87,12 @@ class myConfig():
         else:
             self.Save(temporary, newfile=True)
 
+# %%
+
+    """  Save configuration to new file   """                                   
                                
     def Save(self, temporary=False, newfile=False, filename=None):
-        """
-        Save configuration to new file
-        """
-        
+        print(' Save function in pvg_common')                                   # temporary debug print
         if temporary and not filename: filename = self.filename_temp
         elif not temporary and not filename: filename = self.filename
        
@@ -111,9 +111,13 @@ class myConfig():
         with open(filename, 'wb') as configfile:
             self.config.write(configfile)
     
-        if not temporary: self.Save(temporary=True)
+        if not temporary: self.Save(temporary=True)                             # Why do we save twice?
+#  let user know save is complete        
+        dlg = wx.MessageBox('File Saved', 'Info', 
+            wx.OK | wx.ICON_INFORMATION)      
+        
 
-
+# %%
     def setValue(self, section, key, value):
         """
         """
@@ -188,12 +192,16 @@ class myConfig():
             if group == section: opts.append(key)
         return opts
 
+# %%
+"""  Inheriting from myConfig  """
+
+
 class pvg_config(myConfig):
-    """
-    Inheriting from myConfig
-    """
+    
+    
     def __init__(self, filename=None, temporary=False):
 
+        print('pvg_config init function')                                       # temporary debug print
         #                   "VAR_Name" : [DEFAULT VALUE, "Description", "Group_name"]
         defaultOptions = { "Monitors" : [1, "Select the number of monitors connected to this machine", "General"],
                             "Webcams"  : [1, "Select the number of webcams connected to this machine", "General"],

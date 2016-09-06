@@ -864,6 +864,7 @@ class ROImask():
         """
         Save the current crop data to a file
         """
+        print('saveROIS class ROIMask called')
         cf = open(filename, 'w')
         self.serial = serial
         jsonData = {'ROIS':self.ROIS, 'pointsToTrack':self.points_to_track,'referencePoints': self.referencePoints, 'serial':self.serial}
@@ -1626,6 +1627,7 @@ class Monitor(object):
 
 
     def saveROIS(self, filename=None):
+        print('mask.saveROIS class Monitor')  
         """
         Save the current crop data to a file
         """
