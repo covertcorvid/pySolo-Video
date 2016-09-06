@@ -84,12 +84,12 @@ class panelGridView(wx.ScrolledWindow):
         self.thumbnailSize = thumbnailSize
 
         self.grid_mainSizer = wx.GridSizer(6,3,2,2)
-        self.gridSize = gridSize
 
         #Populate the thumbnail grid
         self.previewPanels = []
         for i in range (int(gridSize)):
-            self.previewPanels.append ( thumbnailPanel(self, monitor_number=i, thumbnailSize=self.thumbnailSize) )
+            self.previewPanels.append ( thumbnailPanel(self, monitor_number=i,
+                thumbnailSize=self.thumbnailSize) )
             self.grid_mainSizer.Add(self.previewPanels[i])#, 0, wx.EXPAND|wx.FIXED_MINSIZE, 0)
 
         self.SetSizer(self.grid_mainSizer)
@@ -136,7 +136,8 @@ class panelConfigure(wx.Panel):
     def __init__(self, parent):
         """
         """
-        wx.Panel.__init__(self, parent, wx.ID_ANY, size=(-1,300), style=wx.SUNKEN_BORDER|wx.TAB_TRAVERSAL)
+        wx.Panel.__init__(self, parent, wx.ID_ANY, size=(-1,300),
+            style=wx.SUNKEN_BORDER|wx.TAB_TRAVERSAL)
         self.parent = parent
 
         self.thumbnail = None
