@@ -21,12 +21,14 @@
 #       MA 02110-1301, USA.
 
 # %%
-import wx
+import wx                 # GUI functions
 import os
 import numpy as np
-import cv2
+import cv2                # camera / video control
+import pysolovideo 
+import pvg_options
+from sys import argv      # file I/O
 from pvg_common import previewPanel, options
-# import pysolovideo
 
 x, y = options.GetOption("Resolution")    # screen resolution
 
@@ -44,6 +46,9 @@ class panelLiveView(wx.Panel):
     def __init__(self, parent):
 
         self.panel = wx.Panel.__init__(self, parent)
+        self.fsPanel = previewPanel(self,
+                                    size=options.GetOption("Resolution"),
+                                    showtime=True)
 
 # %%%%%%%%%%%%%%%%%% sizer_Left: Monitor Display
 #  Monitor Selection on top
@@ -51,7 +56,7 @@ class panelLiveView(wx.Panel):
         title_1 = wx.StaticText(self, wx.ID_ANY, 'Select Monitor')
     # create select monitor combobox on top of left column
         MonitorList = ['Monitor %s' % (int(m) + 1)
-                      for m in range(options.GetOption("Monitors"))]            # how many monitors?
+                      for m in range(options.GetOption("Monitors"))]            # not reflecting number of monitors in configuration
         thumbnailNumber = wx.ComboBox(self, wx.ID_ANY,
                                      choices=MonitorList,
                                      style=wx.CB_DROPDOWN |
@@ -63,14 +68,14 @@ class panelLiveView(wx.Panel):
         sizer_top_Left = wx.BoxSizer(wx.HORIZONTAL)
         sizer_top_Left.Add(title_1, 0, wx.ALL, 5)          # menu title
         sizer_top_Left.Add(thumbnailNumber, 0, wx.ALL, 5)  # menu
-        
+
 # %%  Movie Display on bottom
         videoWarper = wx.StaticBox(self, label='Movie Label',
                                    size=(x/2, y*2/3))
-        videoBoxSizer = wx.StaticBoxSizer(videoWarper, wx.VERTICAL)
+        videoBoxSizer = wx.StaticBoxSizer(videoWarper, wx.VERTICAL) 
         videoFrame = wx.Panel(self, wx.ID_ANY, size=(640, 480))
-        cap = cv2.VideoCapture('fly_movie.avi')                                # not working on Mom's computer
-        showCap = ShowCapture(videoFrame, cap)                                 # not working on Mom's computer
+#        cap = cv2.VideoCapture('fly_movie.avi')                                # not working on thinkpad computer
+#        showCap = ShowCapture(videoFrame, cap)                                 # not working on thinkpad computer
         videoBoxSizer.Add(videoFrame, 0)
 
 #  Sizer for left side of display
@@ -92,7 +97,7 @@ class panelLiveView(wx.Panel):
 #        self.Bind(wx.EVT_BUTTON, self.fsPanel.ClearLast, self.btnClearSelected)
 #
 #  sizer for clear buttons on right side of display
-        sizer_ClrBtns_Right = wx.BoxSizer(wx.HORIZONTAL)    
+        sizer_ClrBtns_Right = wx.BoxSizer(wx.HORIZONTAL)
         sizer_ClrBtns_Right.Add(btnClearSelected, 0, wx.ALL, 5)    # clear selected
         sizer_ClrBtns_Right.Add(btnClearAll, 0, wx.ALL, 5)         # clear all
 
@@ -104,7 +109,7 @@ class panelLiveView(wx.Panel):
 #        self.btnAutoFill.Enable(False)
 
 #  sizer for AutoFill controls
-        sizer_Autofill_Right = wx.BoxSizer(wx.HORIZONTAL)    
+        sizer_Autofill_Right = wx.BoxSizer(wx.HORIZONTAL)
         sizer_Autofill_Right.Add(btnAutoFill, 0, wx.ALL, 5)        # Autofill
         sizer_Autofill_Right.Add(AFValue, 0, wx.ALL, 5)            # AF Value
 
@@ -112,21 +117,22 @@ class panelLiveView(wx.Panel):
 # %%  Right Side, Mask selection controls
 #   Mask Title
         Mask_File_Title = wx.StaticText(self, wx.ID_ANY, "Curent Mask")
-        currentMaskTXT = wx.TextCtrl(self, wx.ID_ANY, "No Mask Loaded",
+        self.currentMaskTXT = wx.TextCtrl(self, wx.ID_ANY, value='No Mask Selected',
                                      size=(x/4,20))
 #                                     style=wx.TE_READONLY)                     #  get the current mask text for this
         #  sizer for current mask
         sizer_currmsk_Right = wx.BoxSizer(wx.HORIZONTAL)  # button section
         sizer_currmsk_Right.Add(Mask_File_Title, 0, wx.ALL, 5)   # title
-        sizer_currmsk_Right.Add(currentMaskTXT, 0, wx.ALL, 5)   # title
-        
-# %% 
+        sizer_currmsk_Right.Add(self.currentMaskTXT, 0, wx.ALL, 5)   # title
+
+# %%
 #   Mask Buttons
         btnLoad = wx.Button(self, wx.ID_ANY, label="Load Mask")
-#        self.Bind(wx.EVT_BUTTON, self.onLoadMask, self.btnLoad)
+        self.Bind(wx.EVT_BUTTON, self.onLoadMask, btnLoad)
 
         btnSave = wx.Button(self, wx.ID_ANY, label="Save Mask")
-#        self.Bind(wx.EVT_BUTTON, self.onSaveMask, self.btnSave)
+        self.Bind(wx.EVT_BUTTON, self.onSaveMask, btnSave)
+
         btnSaveApply = wx.Button( self, wx.ID_ANY, label="Save + Apply")
 #        self.Bind(wx.EVT_BUTTON, self.onSaveApply, self.btnSaveApply)
 
@@ -180,27 +186,31 @@ class panelLiveView(wx.Panel):
         sizer_All.Add(sizer_Right, 0, wx.ALL, 5)
 
         self.SetSizer(sizer_All)                   # displays the grid
-        
+
 # %%                                                                               # What does this do?
 #        print wx.Window.FindFocus()
 #
 #        self.Bind( wx.EVT_CHAR, self.fsPanel.onKeyPressed )
 
-# %%  Event functions
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  Event functions
+#
+#  Stop Playing
 
     def StopPlaying(self):
         """
         """
-        if self.fsPanel and self.fsPanel.isPlaying: self.fsPanel.Stop()
+        print('Stop Playing Function')                                          # temporary debug print
+#        if self.fsPanel and self.fsPanel.isPlaying: self.fsPanel.Stop()
 #
 #
-# %%
+# %%  Change Monitor
+
     def onChangeMonitor(self, event):
         """
         FIX THIS
         this is a mess
         """
-        print("onChangeMonitor activated")
+        print("onChangeMonitor activated")                                      # temporary debug print
 #        mn = event.GetSelection() + 1
 #
 #        if options.HasMonitor(mn):
@@ -233,30 +243,35 @@ class panelLiveView(wx.Panel):
 #        self.fsPanel.autoDivideMask(n_roi)
 #
 #
-## %%
-#    def onSaveMask(self, event):
-#        """
-#        Save ROIs to File
-#        """
-#
-#        filename = '%s.msk' % self.monitor_name.replace(' ','_')
-#        wildcard = "pySolo mask file (*.msk)|*.msk"
-#
-#        dlg = wx.FileDialog(
-#            self, message="Save file as ...", defaultDir=options.GetOption("Mask_Folder"),
-#            defaultFile=filename, wildcard=wildcard, style=wx.SAVE
-#            )
-#
-#        # dlg.SetFilterIndex(2)
-#
-#        if dlg.ShowModal() == wx.ID_OK:
-#            path = dlg.GetPath()
-#            self.fsPanel.mon.saveROIS(path)
-#            self.currentMaskTXT.SetValue(os.path.split(path)[1])
-#
-#        dlg.Destroy()
+# %%  Save Mask
+    """  Save ROIs to File  """
+    
+    def onSaveMask(self, event):
+                                                                                # temporary debug print
+        print('Current Mask Name = ' + self.currentMaskTXT.GetValue())          # each switch between file types adds another .msk to the filename
+        wildcard = "PySolo Mask (*.msk) | *.msk |" \
+                   "All files (*.*)|*.*"
+                   
+        print('wildcard = ' + wildcard)                                         # temporary debug print
+
+        dlg = wx.FileDialog(self, message="Save file as ...", 
+                            defaultDir=options.GetOption("Mask_Folder"),
+                            defaultFile=self.currentMaskTXT.GetValue(),
+                            wildcard=wildcard, 
+                            style=wx.SAVE | wx.FD_OVERWRITE_PROMPT)
+
+        print('Current Mask Name = ' + self.currentMaskTXT.GetValue())          # temporary debug print
+#        dlg.SetFilterIndex(2)
+
+        if dlg.ShowModal() == wx.ID_OK:
+            path = dlg.GetPath()
+            print('save path = ' + path)                                        # temporary debug print
+            self.fsPanel.mon.saveROIS(path)
+            self.currentMaskTXT.SetValue(os.path.split(path)[1])
+
+        dlg.Destroy()
 #        return path
-#
+
 ## %%
 #    def onSaveApply(self, event):
 #        """
@@ -267,33 +282,36 @@ class panelLiveView(wx.Panel):
 #        options.setValue(mn, 'maskfile', path)
 #        options.Save()
 #
-## %%
-#    def onLoadMask(self, event):
-#        """
-#        Load Mask from file
-#        """
-#
-#        wildcard = "pySolo mask file (*.msk)|*.msk"
-#
-#        dlg = wx.FileDialog(
-#            self, message="Choose a file",
-#            defaultDir=options.GetOption("Mask_Folder"),
-#            defaultFile="",
-#            wildcard=wildcard,
-#            style=wx.OPEN | wx.CHANGE_DIR
-#            )
-#
-#        if dlg.ShowModal() == wx.ID_OK:
-#            path = dlg.GetPath()
-#            self.fsPanel.mon.loadROIS(path)
-#            self.currentMaskTXT.SetValue(os.path.split(path)[1])
-#
-#        dlg.Destroy()
-#
-#
-#
-#x, y = options.GetOption("Resolution")    # screen resolution global variables.
-#
+# %%
+    def onLoadMask(self, event):
+        """
+        Load Mask from file
+        """
+        print('Load Mask Function')                                             # temporary debug print
+        wildcard = "PySolo Mask (*.msk) | *.msk | " \
+                   "All files (*.*)|*.*"
+
+    
+        print('before filedialog')                                              # temporary debug print
+        dlg = wx.FileDialog(self, message="Choose a file",
+            defaultDir=options.GetOption("Mask_Folder"),
+            defaultFile="",
+            wildcard=wildcard,
+            style=wx.FD_OPEN | wx.FD_CHANGE_DIR
+            )
+        print('after filedialog')                                               # temporary debug print
+        if dlg.ShowModal() == wx.ID_OK:
+            print('showmodal is true')                                          # temporary debug print
+            path = dlg.GetPath()
+            print('Load Path = ' + path)                                        # temporary debug print
+            self.fsPanel.mon.saveROIS(path)                                     # load set to save temporarily since load isn't working
+            self.currentMaskTXT.SetValue(os.path.split(path)[1])
+            
+        print('done')                                                           # temporary debug print
+        dlg.Destroy()
+
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 class ShowCapture(wx.Panel):
 
     def __init__(self, parent, capture, fps=24):

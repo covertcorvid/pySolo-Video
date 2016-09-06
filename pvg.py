@@ -23,8 +23,8 @@
 #
 #
 
-# %%
-#      Import modules
+# %%      
+""" Import modules """
 
 import wx, os
 
@@ -34,96 +34,97 @@ from pvg_acquire import pvg_AcquirePanel as panelOne
 from pvg_panel_two import panelLiveView
 from pvg_common import options, DEFAULT_CONFIG
 
-from pysolovideo import pySoloVideoVersion
+import pysolovideo
 
 
-# %%
+# %%    
+""" Create main window """
 
 
 class mainFrame(wx.Frame):
-    """
-    Creates the main window of the application.
-    """
 # %%
+    """ Initialize """
 
     def __init__(self, *args, **kwds):
 
         kwds["style"] = wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwds)
 
-        self.__set_properties()     # set title, position, and size of
-        #                                     main window.
+        self.__set_properties()     # set window title, position, and size
         self.__do_layout()          # set shape and size of notebook in window.
         self.__menubar__()          # create the menu bar across the top
 
-# %%    Set the properties of the main window
+# %%   
+    """ Set the properties of the main window  """
 
     def __set_properties(self):
         # begin wxGlade: mainFrame.__set_properties
-        self.SetTitle("pySoloVideo")                # Title
-        self.SetSize((x*0.95, y*0.95))            # size of window in pixels
-        self.SetPosition((x*0.05, y*0.05))          # position of window on display
+        self.SetTitle("pySoloVideo")            # Title
+        self.SetSize((x*0.95, y*0.95))          # size of window in pixels
+        self.SetPosition((x*0.05, y*0.05))      # position of window on display
 
-# %%
+# %%   
+    """  Put a notebook in the window  """
 
     def __do_layout(self):
-        # Add Notebook
         self.videoNotebook = mainNotebook(self, -1)
 
         mainSizer = wx.BoxSizer(wx.HORIZONTAL)
         mainSizer.Add(self.videoNotebook, 1, wx.EXPAND, 0)
         self.SetSizer(mainSizer)
 
-# %%
+# %%  
+    """  Generate the menu bar for the notebook.  """
 
     def __menubar__(self):
 
-        # Gives new IDs to the menu voices in the menubar
-        # File menu
+    # Get new IDs for the menu options in the menubar -----------------------
+     # File menu -----------------------------------------
         ID_FILE_OPEN = wx.NewId()       # Open
-        ID_FILE_SAVE = wx.NewId()
+        ID_FILE_SAVE = wx.NewId()       # Save
         ID_FILE_SAVE_AS = wx.NewId()    # Save As...
-        # ID_FILE_CLOSE =  wx.NewId()
+        # ID_FILE_CLOSE =  wx.NewId()   # Close
         ID_FILE_EXIT = wx.NewId()       # Exit
 
-        # Options Menu
+     # Options Menu --------------------------------------
         ID_OPTIONS_SET = wx.NewId()     # Configure
 
-        # Help Menu
+     # Help Menu -----------------------------------------
         ID_HELP_ABOUT = wx.NewId()      # About
+        
 
-        # Generate the dropdown lists.  & indicates shortcut letter
-        # File menu
+    # Generate the dropdown lists.  (& indicates shortcut letter) -----------
+     # File menu --------------------------------------------------
         filemenu = wx.Menu()
-        filemenu. Append(ID_FILE_OPEN, '&Open File', 'Open a file')
-        filemenu. Append(ID_FILE_SAVE, '&Save File', 'Save current file')
-        filemenu. Append(ID_FILE_SAVE_AS,
-                         '&Save as...', 'Save current data in a new file')
-        # filemenu. Append(ID_FILE_CLOSE, '&Close File', 'Close')
-        filemenu. AppendSeparator()
-        filemenu. Append(ID_FILE_EXIT, 'E&xit Program', 'Exit')
+        filemenu.Append(ID_FILE_OPEN, '&Open File', 'Open a file')
+        filemenu.Append(ID_FILE_SAVE, '&Save File', 'Save current file')
+        filemenu.Append(ID_FILE_SAVE_AS,
+                       '&Save as...', 'Save current data in a new file')
+        # filemenu.Append(ID_FILE_CLOSE, '&Close File', 'Close')
+        filemenu.AppendSeparator()
+        filemenu.Append(ID_FILE_EXIT, 'E&xit Program', 'Exit')
 
-        # Options Menu
+     # Options Menu ------------------------------------------------
         optmenu = wx.Menu()
-        optmenu. Append(ID_OPTIONS_SET,
-                        'Confi&gure', 'View and change settings')
+        optmenu.Append(ID_OPTIONS_SET,
+                      'Confi&gure', 'View and change settings')
 
-        # Help Menu
+     # Help Menu ---------------------------------------------------
         helpmenu = wx.Menu()
-        helpmenu. Append(ID_HELP_ABOUT, 'Abou&t')
+        helpmenu.Append(ID_HELP_ABOUT, 'Abou&t')
 
-        # Create the MenuBar
+   # Create the MenuBar ----------------------------------------------------
         menubar = wx.MenuBar(style=wx.SIMPLE_BORDER)
 
-        # Populate the MenuBar
-        menubar. Append(filemenu, '&File')
-        menubar. Append(optmenu, '&Options')
-        menubar. Append(helpmenu, '&Help')
+     # Populate the MenuBar ----------------------------------------
+        menubar.Append(filemenu, '&File')
+        menubar.Append(optmenu, '&Options')
+        menubar.Append(helpmenu, '&Help')
 
-        # and apply the menubar
+     # and apply the menubar ---------------------------------------
         self.SetMenuBar(menubar)
 
-        # Associate the menu items with their functions
+     # Associate the menu items with their functions ---------------
         wx.EVT_MENU(self, ID_FILE_OPEN, self.onFileOpen)
         wx.EVT_MENU(self, ID_FILE_SAVE, self.onFileSave)
         wx.EVT_MENU(self, ID_FILE_SAVE_AS, self.onFileSaveAs)
@@ -133,36 +134,33 @@ class mainFrame(wx.Frame):
         wx.EVT_MENU(self, ID_HELP_ABOUT, self.onAbout)
 
 # %%
+    """  About Dialog  """
 
     def onAbout(self, event):
-        """
-        Shows the about dialog
-        """
-        about = 'pySolo-Video - v %s\n' % pySoloVideoVersion
-        about += 'by Giorgio F. Gilestro\n'
-        about += 'Visit http://www.pysolo.net for more information'
+        pySoloVideoVersion = "XXXXXXXXXXX"                                       # temporary value
+        info = wx.AboutDialogInfo()
+        
+        info.SetVersion('pySolo-Video - v' + pySoloVideoVersion)                 # PySoloVideoVersion not specified
+        info.SetCopyright('by Giorgio F. Gilestro\n')
+        info.SetWebSite('http://www.pysolo.net')
 
-        dlg = wx.MessageDialog(self,
-                               about, 'About', wx.OK | wx.ICON_INFORMATION)
-        dlg.ShowModal()
-        dlg.Destroy()
+        wx.AboutBox(info)
 
 # %%
+    """  Saves the current configuration to the same file that was opened. """
 
     def onFileSave(self, event):
-        """
-        Saves the current configuration to the same file that was opened.
-        """
-        options.Save()
+        print(' File > Save ')                                                   # temporary debug print
+        options.Save()                  # options class contains config info
+                                        #    see pvg_common.py class MyConfig()
 
 # %%
+    """  Saves the current configuration to a new file, named by the user. """
 
     def onFileSaveAs(self, event):
-        """
-        Saves the current configuration to a new file, named by the user.
-        """
         filename = DEFAULT_CONFIG
-        wildcard = "pySolo Video config file (*.cfg)|*.cfg"
+        wildcard = "pySolo Video config file (*.cfg)|*.cfg |" \
+                    "All files (*.*)|*.*"
 
         # opens the file explorer for user to choose file path and name.
         dlg = wx.FileDialog(
@@ -180,10 +178,9 @@ class mainFrame(wx.Frame):
         dlg.Destroy()
 
 # %%
-
+    """  Opens a file  """
+    
     def onFileOpen(self, event):
-        """
-        """
         wildcard = "pySolo Video config file (*.cfg)|*.cfg"
 
         dlg = wx.FileDialog(
@@ -201,17 +198,14 @@ class mainFrame(wx.Frame):
         dlg.Destroy()
 
 # %%
+    """  Closes a file   """
 
     def onFileExit(self, event):
-        """
-        """
         self.Close()
 
 # %%
-
+    """ Change Configuration  """
     def onConfigure(self, event):
-        """
-        """
         frame_opt = optionsFrame(self)
         #frame_opt.Show()
         res = frame_opt.ShowModal()
@@ -222,17 +216,11 @@ class mainFrame(wx.Frame):
             print "no changes were made"
 
 # %%
-
-
+"""  The main notebook containing all the panels for data displaying and
+     analysis.  This is displayed inside the main window.  """
 class mainNotebook(wx.Notebook):
-    #
-    #    The main notebook containing all the panels for data displaying and
-    #    analysis.  This is displayed inside the main window.
-    #
-
-    # %%
-    #
-    #   creates a notebook with tabs on the left side
+# %% 
+    """  creates a notebook with tabs on the left side  """
 
     def __init__(self, *args, **kwds):
         # begin wxGlade: propertiesNotebook.__init__
@@ -250,6 +238,7 @@ class mainNotebook(wx.Notebook):
         self.Layout()
 
 # %%
+    """  refreshes screens  """
 
     def updateUI(self):
         self.panelOne.onRefresh()
@@ -257,14 +246,14 @@ class mainNotebook(wx.Notebook):
         self.Layout()
 
 # %%
+    """  refreshes screens after configuration change  """
 
     def OnPageChanging(self, event):
-        """
-        """
-        # self.panelOne.StopPlaying()
+        # self.panelOne.StopPlaying()                                           # old, unnecessary code?
         self.panelTwo.StopPlaying()
 
 # %%
+"""  Main Program  """
 
 x, y = options.GetOption("Resolution")    # screen resolution global variables.
 
@@ -276,5 +265,5 @@ if __name__ == "__main__":
     frame_1.Show()
     app.SetTopWindow(frame_1)
     app.MainLoop()                        # begin interaction with user
-    print('done')
+    print('done')                                                               # temporary debug print
     
